@@ -75,6 +75,8 @@ export default function PatientDetailDrawer({
 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) return 'Unknown';
+    
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -229,10 +231,19 @@ export default function PatientDetailDrawer({
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium">
-                        {format(new Date(patient.dob), 'MMM d, yyyy')} 
-                        <span className="text-muted-foreground ml-2">
-                          (Age {calculateAge(patient.dob)})
-                        </span>
+                        {(() => {
+                          const date = new Date(patient.dob);
+                          return !isNaN(date.getTime()) ? (
+                            <>
+                              {format(date, 'MMM d, yyyy')} 
+                              <span className="text-muted-foreground ml-2">
+                                (Age {calculateAge(patient.dob)})
+                              </span>
+                            </>
+                          ) : (
+                            'Invalid date'
+                          );
+                        })()}
                       </p>
                       <p className="text-xs text-muted-foreground">Date of Birth</p>
                     </div>
@@ -313,12 +324,22 @@ export default function PatientDetailDrawer({
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-xs text-muted-foreground">Created</span>
-                  <span className="text-xs">{format(new Date(patient.created_at), 'MMM d, yyyy h:mm a')}</span>
+                  <span className="text-xs">
+                    {(() => {
+                      const date = new Date(patient.created_at);
+                      return !isNaN(date.getTime()) ? format(date, 'MMM d, yyyy h:mm a') : 'Invalid date';
+                    })()}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between">
                   <span className="text-xs text-muted-foreground">Last Updated</span>
-                  <span className="text-xs">{format(new Date(patient.updated_at), 'MMM d, yyyy h:mm a')}</span>
+                  <span className="text-xs">
+                    {(() => {
+                      const date = new Date(patient.updated_at);
+                      return !isNaN(date.getTime()) ? format(date, 'MMM d, yyyy h:mm a') : 'Invalid date';
+                    })()}
+                  </span>
                 </div>
                 
                 {patient.created_by && (

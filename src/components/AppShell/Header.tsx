@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAppStore } from '@/store/appStore';
+import { useMe } from '@/hooks/useMe';
 import { useToast } from '@/hooks/use-toast';
+import { ROLE_CONFIG } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,11 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { Stethoscope, User, LogOut, Wifi, WifiOff, Database } from 'lucide-react';
+import { Stethoscope, User, LogOut, Wifi, WifiOff, Database, Building2 } from 'lucide-react';
 import ClinicSelector from './ClinicSelector';
 
 export default function Header() {
-  const { user, profile, isOnline, currentClinic } = useAppStore();
+  const { user, profile, clinics, currentClinic, switchClinic } = useMe();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -28,7 +29,6 @@ export default function Header() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      useAppStore.getState().reset();
       navigate('/auth/login');
       
       toast({
@@ -46,6 +46,8 @@ export default function Header() {
     }
   };
 
+  const roleConfig = profile?.role ? ROLE_CONFIG[profile.role] : null;
+
   return (
     <header className="border-b bg-card medical-shadow">
       <div className="flex h-16 items-center justify-between px-6">
@@ -62,7 +64,7 @@ export default function Header() {
 
         {/* Middle section with clinic selector */}
         <div className="flex items-center space-x-4">
-          <ClinicSelector />
+          {clinics.length > 1 && <ClinicSelector />}
         </div>
 
         {/* Right section with status and user menu */}
@@ -70,20 +72,11 @@ export default function Header() {
           {/* Status indicators */}
           <div className="flex items-center space-x-2">
             <Badge 
-              variant={isOnline ? "default" : "destructive"}
-              className={`text-xs ${isOnline ? 'status-online' : 'status-offline'}`}
+              variant="outline"
+              className="text-xs"
             >
-              {isOnline ? (
-                <>
-                  <Wifi className="h-3 w-3 mr-1" />
-                  Online
-                </>
-              ) : (
-                <>
-                  <WifiOff className="h-3 w-3 mr-1" />
-                  Offline
-                </>
-              )}
+              <Wifi className="h-3 w-3 mr-1" />
+              Online
             </Badge>
             
             <Badge variant="outline" className="text-xs">
@@ -110,12 +103,46 @@ export default function Header() {
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium">{profile?.full_name}</p>
                   <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  <Badge variant="outline" className="text-xs w-fit capitalize">
-                    {profile?.role}
-                  </Badge>
+                  <div className="flex items-center space-x-2">
+                    {roleConfig && (
+                      <Badge className={`text-xs ${roleConfig.color}`}>
+                        {roleConfig.label}
+                      </Badge>
+                    )}
+                    {currentClinic && (
+                      <Badge variant="outline" className="text-xs">
+                        <Building2 className="h-3 w-3 mr-1" />
+                        {currentClinic.name}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </DropdownMenuLabel>
               
+              
+              {/* Clinic switcher */}
+              {clinics.length > 1 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Switch Clinic</p>
+                    {clinics.map((clinic) => (
+                      <DropdownMenuItem
+                        key={clinic.id}
+                        onClick={() => switchClinic(clinic)}
+                        className={`text-sm ${currentClinic?.id === clinic.id ? 'bg-muted' : ''}`}
+                      >
+                        <Building2 className="mr-2 h-3 w-3" />
+                        {clinic.name}
+                        {currentClinic?.id === clinic.id && (
+                          <Badge variant="outline" className="ml-auto text-xs">Current</Badge>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <DropdownMenuSeparator />
               
               <DropdownMenuItem 

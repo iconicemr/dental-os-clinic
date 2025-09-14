@@ -1,4 +1,4 @@
-import { useAppStore } from '@/store/appStore';
+import { useMe } from '@/hooks/useMe';
 import {
   Select,
   SelectContent,
@@ -9,7 +9,7 @@ import {
 import { Building2 } from 'lucide-react';
 
 export default function ClinicSelector() {
-  const { clinics, currentClinic, setCurrentClinic } = useAppStore();
+  const { clinics, currentClinic, switchClinic } = useMe();
 
   if (clinics.length <= 1) {
     return (
@@ -23,7 +23,7 @@ export default function ClinicSelector() {
   const handleClinicChange = (clinicId: string) => {
     const clinic = clinics.find(c => c.id === clinicId);
     if (clinic) {
-      setCurrentClinic(clinic);
+      switchClinic(clinic);
     }
   };
 

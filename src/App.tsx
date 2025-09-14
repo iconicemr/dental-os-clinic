@@ -21,6 +21,7 @@ import Expenses from "@/routes/Expenses";
 import Analytics from "@/routes/Analytics";
 import Admin from "@/routes/Admin";
 import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -1,49 +1,40 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings } from 'lucide-react';
-import { useAppStore } from '@/store/appStore';
+import { Navigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StaffTable from '@/components/admin/StaffTable';
+import ProvidersTable from '@/components/admin/ProvidersTable';
+import { useMe } from '@/hooks/useMe';
 
 export default function Admin() {
-  const { profile } = useAppStore();
+  const { profile } = useMe();
 
-  if (profile?.role !== 'admin') {
-    return (
-      <div className="p-6">
-        <Card className="medical-shadow">
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Access denied. Admin privileges required.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // Route guard: only admins can access Admin page
+  if (profile && profile.role !== 'admin') {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return (
-    <div className="p-6">
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Admin</h1>
-          <p className="text-muted-foreground">
-            System administration and user management
-          </p>
-        </div>
-
-        <Card className="medical-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Settings className="h-5 w-5" />
-              <span>System Administration</span>
-            </CardTitle>
-            <CardDescription>
-              Coming soon: User management, clinic settings, and system configuration
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              This section will handle user management, clinic configuration, and system administration.
-            </p>
-          </CardContent>
-        </Card>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Administration</h1>
+        <p className="text-muted-foreground">Manage staff roles, clinic membership, and providers.</p>
       </div>
+
+      {/* Admin Tabs */}
+      <Tabs defaultValue="staff" className="space-y-6">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
+          <TabsTrigger value="staff">Staff</TabsTrigger>
+          <TabsTrigger value="providers">Providers</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="staff" className="space-y-6">
+          <StaffTable />
+        </TabsContent>
+
+        <TabsContent value="providers" className="space-y-6">
+          <ProvidersTable />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

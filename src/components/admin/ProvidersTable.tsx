@@ -333,7 +333,7 @@ export default function ProvidersTable() {
 interface CreateProviderDialogProps {
   doctor: DoctorProfile;
   formData: { display_name: string; specialty: string };
-  setFormData: (data: { display_name: string; specialty: string }) => void;
+  setFormData: React.Dispatch<React.SetStateAction<{ display_name: string; specialty: string }>>;
   onSubmit: () => void;
   isLoading: boolean;
 }

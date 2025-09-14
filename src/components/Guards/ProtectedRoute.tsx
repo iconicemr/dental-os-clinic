@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, Profile, Clinic, StaffClinic, Room } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/appStore';
 import { useToast } from '@/hooks/use-toast';
 
@@ -82,7 +82,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
       if (staffError) throw staffError;
 
-      let clinics: Clinic[] = staffClinics?.map((sc: any) => sc.clinics).filter(Boolean) || [];
+      let clinics: any[] = staffClinics?.map((sc: any) => sc.clinics).filter(Boolean) || [];
 
       // 3. If no clinics, check if any exist in the system
       if (clinics.length === 0) {
@@ -112,7 +112,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
           if (staffError) throw staffError;
 
-          clinics = [newClinic as Clinic];
+          clinics = [newClinic];
         } else {
           // Link to first clinic
           const { data: firstClinic, error: firstClinicError } = await supabase
@@ -132,7 +132,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
           if (staffError) throw staffError;
 
-          clinics = [firstClinic as Clinic];
+          clinics = [firstClinic];
         }
       }
 
@@ -162,7 +162,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           .select();
 
         if (roomError) throw roomError;
-        rooms = newRoom as Room[];
+        rooms = newRoom;
       }
 
       return {
@@ -179,10 +179,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Update app state when data is loaded
   useEffect(() => {
     if (setupData) {
-      setProfile(setupData.profile);
-      setClinics(setupData.clinics);
-      setCurrentClinic(setupData.currentClinic);
-      setRooms(setupData.rooms);
+      setProfile(setupData.profile as any);
+      setClinics(setupData.clinics as any);
+      setCurrentClinic(setupData.currentClinic as any);
+      setRooms(setupData.rooms as any);
     }
     setLoading(isLoading);
   }, [setupData, isLoading, setProfile, setClinics, setCurrentClinic, setRooms, setLoading]);

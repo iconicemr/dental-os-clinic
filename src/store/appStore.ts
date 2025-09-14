@@ -1,6 +1,31 @@
 import { create } from 'zustand';
 import { User } from '@supabase/supabase-js';
-import { Profile, Clinic, Room } from '@/lib/supabase';
+// Type definitions for the database tables
+interface Profile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  role: 'admin' | 'doctor' | 'assistant';
+  created_at: string;
+  updated_at: string;
+}
+
+interface Clinic {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Room {
+  id: string;
+  clinic_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AppState {
   // Auth state

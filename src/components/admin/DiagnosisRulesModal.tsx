@@ -62,13 +62,13 @@ export function DiagnosisRulesModal({ open, onOpenChange, diagnosis }: Diagnosis
     if (currentRules && open) {
       setRequiresTooth(currentRules.rules?.requires_tooth || false);
       setXrayRequired(currentRules.rules?.xray_required || false);
-      setDefaultTreatmentId(currentRules.rules?.default_treatment_id || '');
+      setDefaultTreatmentId(currentRules.rules?.default_treatment_id || 'NONE');
       setAllowedTreatmentIds(currentRules.allowedTreatments || []);
     } else if (open) {
       // Reset to defaults when opening modal
       setRequiresTooth(false);
       setXrayRequired(false);
-      setDefaultTreatmentId('');
+      setDefaultTreatmentId('NONE');
       setAllowedTreatmentIds([]);
     }
   }, [currentRules, open]);
@@ -79,7 +79,7 @@ export function DiagnosisRulesModal({ open, onOpenChange, diagnosis }: Diagnosis
       if (!diagnosis?.id) throw new Error('No diagnosis selected');
 
       // Validate that default treatment is in allowed list
-      if (defaultTreatmentId && !allowedTreatmentIds.includes(defaultTreatmentId)) {
+      if (defaultTreatmentId && defaultTreatmentId !== 'NONE' && !allowedTreatmentIds.includes(defaultTreatmentId)) {
         throw new Error('Default treatment must be in the allowed treatments list');
       }
 
@@ -90,7 +90,7 @@ export function DiagnosisRulesModal({ open, onOpenChange, diagnosis }: Diagnosis
           diagnosis_id: diagnosis.id,
           requires_tooth: requiresTooth,
           xray_required: xrayRequired,
-          default_treatment_id: defaultTreatmentId || null,
+          default_treatment_id: defaultTreatmentId === 'NONE' ? null : defaultTreatmentId,
         });
 
       if (rulesError) throw rulesError;
@@ -278,7 +278,7 @@ export function DiagnosisRulesModal({ open, onOpenChange, diagnosis }: Diagnosis
                       <SelectValue placeholder="No default treatment" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No default treatment</SelectItem>
+                      <SelectItem value="NONE">No default treatment</SelectItem>
                       {allowedTreatments.map((treatment) => (
                         <SelectItem key={treatment.id} value={treatment.id}>
                           {treatment.name_en}

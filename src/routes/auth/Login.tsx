@@ -97,7 +97,7 @@ export default function Login() {
               <Input
                 id="code"
                 type="text"
-                placeholder="admin"
+                placeholder="Enter your staff code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required

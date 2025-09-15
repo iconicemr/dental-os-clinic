@@ -1,5 +1,4 @@
 import { Navigate } from 'react-router-dom';
-import { Navigate } from 'react-router-dom';
 import { useMe } from '@/hooks/useMe';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StaffManagement } from '@/components/admin/StaffManagement';

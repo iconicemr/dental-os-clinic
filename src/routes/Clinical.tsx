@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ClinicalTopBar } from '@/components/Clinical/ClinicalTopBar';
-import { QueueSidebar } from '@/components/Clinical/QueueSidebar';
-import { FindingsCenter } from '@/components/Clinical/FindingsCenter';
-import { DoctorPanel } from '@/components/Clinical/DoctorPanel';
+import { QuickFinding } from '@/components/Clinical/QuickFinding';
+import { FindingsList } from '@/components/Clinical/FindingsList';
+import { DoctorPlanExecution } from '@/components/Clinical/DoctorPlanExecution';
 import { useClinicalWorkflow } from '@/hooks/useClinicalWorkflow';
 
 export default function Clinical() {
@@ -11,32 +11,40 @@ export default function Clinical() {
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Top Bar */}
-      <ClinicalTopBar 
-        activePatient={activePatient}
-        activeVisit={activeVisit}
-        onVisitChange={setActiveVisitId}
-      />
+      {/* Sticky Top Bar */}
+      <div className="sticky top-0 z-10 bg-background border-b">
+        <ClinicalTopBar 
+          activePatient={activePatient}
+          activeVisit={activeVisit}
+          onVisitChange={setActiveVisitId}
+        />
+      </div>
       
-      {/* Three-pane layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Queue Sidebar */}
-        <QueueSidebar 
-          activeVisitId={activeVisitId}
-          onVisitSelect={setActiveVisitId}
-        />
+      {/* Three vertical cards layout */}
+      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
+        {/* A) Quick Finding */}
+        <div className="w-80 min-w-80 flex-shrink-0">
+          <QuickFinding 
+            visitId={activeVisitId}
+            patient={activePatient}
+          />
+        </div>
         
-        {/* Center: Findings */}
-        <FindingsCenter 
-          visitId={activeVisitId}
-          patient={activePatient}
-        />
+        {/* B) Findings */}
+        <div className="flex-1 min-w-96">
+          <FindingsList 
+            visitId={activeVisitId}
+            patient={activePatient}
+          />
+        </div>
         
-        {/* Right: Doctor Panel */}
-        <DoctorPanel 
-          visitId={activeVisitId}
-          patient={activePatient}
-        />
+        {/* C) Doctor: Plan & Execute */}
+        <div className="w-96 min-w-96 flex-shrink-0">
+          <DoctorPlanExecution 
+            visitId={activeVisitId}
+            patient={activePatient}
+          />
+        </div>
       </div>
     </div>
   );

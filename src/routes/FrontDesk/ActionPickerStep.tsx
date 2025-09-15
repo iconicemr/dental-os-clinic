@@ -6,7 +6,6 @@ import { ArrowLeft, Info } from 'lucide-react';
 import { useWalkInWithProvider } from '@/hooks/useFrontDeskActions';
 import { useToast } from '@/hooks/use-toast';
 import { SearchResult, CreatedPatient } from './AddPatientModal';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useProviders, useRooms } from '@/hooks/useCalendarData';

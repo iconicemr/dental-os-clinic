@@ -10,9 +10,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Card, CardContent } from '@/components/ui/card';
-import { MoreHorizontal, Eye, UserCheck, UserX, Calendar, RotateCcw } from 'lucide-react';
+import { MoreHorizontal, Eye, UserCheck, UserX, Calendar, RotateCcw, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Link, useNavigate } from 'react-router-dom';
 import { useUpdatePatientStatusMutation } from './usePatientsQuery';
 import type { Patient } from './types';
 import { STATUS_CONFIG } from './types';
@@ -27,6 +28,7 @@ interface PatientRowProps {
 export default function PatientRow({ patient, onViewDetails, onEdit, isMobile }: PatientRowProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const updateStatusMutation = useUpdatePatientStatusMutation();
+  const navigate = useNavigate();
 
   const handleStatusUpdate = async (status: Patient['status']) => {
     await updateStatusMutation.mutateAsync({
@@ -52,13 +54,13 @@ export default function PatientRow({ patient, onViewDetails, onEdit, isMobile }:
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onViewDetails(patient)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View Details
+        <DropdownMenuItem onClick={() => navigate(`/patients/${patient.id}`)}>
+          <ExternalLink className="mr-2 h-4 w-4" />
+          View Full Details
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onEdit(patient)}>
           <Eye className="mr-2 h-4 w-4" />
-          Edit Patient
+          Quick Edit
         </DropdownMenuItem>
         
         <DropdownMenuSeparator />
@@ -119,9 +121,13 @@ export default function PatientRow({ patient, onViewDetails, onEdit, isMobile }:
               
               {/* Details */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm truncate" dir="auto">
+                <Link 
+                  to={`/patients/${patient.id}`}
+                  className="font-medium text-sm truncate hover:text-primary transition-colors block" 
+                  dir="auto"
+                >
                   {patient.arabic_full_name}
-                </h3>
+                </Link>
                 {patient.phone && (
                   <p className="text-sm text-muted-foreground">{patient.phone}</p>
                 )}
@@ -152,7 +158,13 @@ export default function PatientRow({ patient, onViewDetails, onEdit, isMobile }:
             {getInitials(patient.arabic_full_name)}
           </div>
           <div>
-            <p className="font-medium" dir="auto">{patient.arabic_full_name}</p>
+            <Link 
+              to={`/patients/${patient.id}`}
+              className="font-medium hover:text-primary transition-colors" 
+              dir="auto"
+            >
+              {patient.arabic_full_name}
+            </Link>
             {patient.latin_name && (
               <p className="text-sm text-muted-foreground">{patient.latin_name}</p>
             )}

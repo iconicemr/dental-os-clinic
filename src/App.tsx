@@ -13,6 +13,7 @@ import Dashboard from "@/routes/Dashboard";
 import Setup from "@/routes/Setup";
 import FrontDesk from "@/routes/FrontDesk";
 import Patients from "@/routes/Patients";
+import PatientDetail from "@/routes/PatientDetail";
 import Intake from "@/routes/Intake";
 import WaitingRoom from "@/routes/WaitingRoom";
 import Calendar from "@/routes/Calendar";
@@ -57,6 +58,14 @@ const App = () => (
             <ProtectedRoute>
               <AppShell>
                 <Patients />
+              </AppShell>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/patients/:patientId" element={
+            <ProtectedRoute>
+              <AppShell>
+                <PatientDetail />
               </AppShell>
             </ProtectedRoute>
           } />

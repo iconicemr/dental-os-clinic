@@ -69,11 +69,11 @@ export function useCreatePatient() {
   });
 }
 
-// Walk-in mutation
+// Walk-in mutation (legacy)
 export function useWalkIn() {
   const queryClient = useQueryClient();
   const { profile, currentClinic } = useAppStore();
-  
+
   return useMutation({
     mutationFn: async (patientId: string) => {
       // 1) Update patient status to arrived
@@ -81,14 +81,14 @@ export function useWalkIn() {
         .from('patients')
         .update({ status: 'arrived' })
         .eq('id', patientId);
-      
+
       if (updateError) throw updateError;
 
       // 2) Check if patient has appointment today
       const today = new Date();
       const startOfDayIso = startOfDay(today).toISOString();
       const endOfDayIso = endOfDay(today).toISOString();
-      
+
       const { data: todayAppt } = await supabase
         .from('appointments')
         .select('id')
@@ -101,7 +101,7 @@ export function useWalkIn() {
       if (!todayAppt) {
         const now = new Date();
         const endTime = addMinutes(now, 30); // Default 30 minutes slot
-        
+
         const { error: appointmentError } = await supabase
           .from('appointments')
           .insert({
@@ -113,17 +113,97 @@ export function useWalkIn() {
             overbook: true,
             created_by: profile?.user_id || null,
           });
-        
+
         if (appointmentError) throw appointmentError;
       }
-      
+
       return { patientId };
     },
     onSuccess: () => {
       // Invalidate front desk queries
-      queryClient.invalidateQueries({ queryKey: ['fd.todayAppointments'] });
-      queryClient.invalidateQueries({ queryKey: ['fd.arrivedUnsigned'] });
-      queryClient.invalidateQueries({ queryKey: ['fd.readyQueue'] });
+      queryClient.invalidateQueries({ queryKey: ['today-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar-appointments'] });
+    },
+  });
+}
+
+// Walk-in with provider selection and same-day upsert
+export function useWalkInWithProvider() {
+  const queryClient = useQueryClient();
+  const { profile, currentClinic } = useAppStore();
+
+  return useMutation({
+    mutationFn: async ({
+      patientId,
+      providerId,
+      roomId,
+      notes,
+      slotMinutes = 30,
+    }: {
+      patientId: string;
+      providerId: string;
+      roomId?: string;
+      notes?: string;
+      slotMinutes?: number;
+    }) => {
+      const now = new Date();
+      const ends = addMinutes(now, slotMinutes);
+
+      // Upsert same-day appointment
+      const { data: today } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('patient_id', patientId)
+        .gte('starts_at', startOfDay(now).toISOString())
+        .lte('starts_at', endOfDay(now).toISOString())
+        .maybeSingle();
+
+      if (today) {
+        const { error: apptErr } = await supabase
+          .from('appointments')
+          .update({
+            provider_id: providerId,
+            room_id: roomId || null,
+            status: 'arrived',
+            starts_at: now.toISOString(),
+            ends_at: ends.toISOString(),
+            notes: notes || null,
+          })
+          .eq('id', today.id);
+        if (apptErr) throw apptErr;
+      } else {
+        const { error: apptInsErr } = await supabase
+          .from('appointments')
+          .insert({
+            clinic_id: currentClinic?.id || null,
+            patient_id: patientId,
+            provider_id: providerId,
+            room_id: roomId || null,
+            starts_at: now.toISOString(),
+            ends_at: ends.toISOString(),
+            status: 'arrived',
+            notes: notes || null,
+            created_by: profile?.user_id || null,
+          });
+        if (apptInsErr) throw apptInsErr;
+      }
+
+      // Update patient status
+      const { error: patientErr } = await supabase
+        .from('patients')
+        .update({ status: 'arrived' })
+        .eq('id', patientId);
+      if (patientErr) throw patientErr;
+
+      return { providerId };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['today-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar-appointments'] });
     },
   });
 }

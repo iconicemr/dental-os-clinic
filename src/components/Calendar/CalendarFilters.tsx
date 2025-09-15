@@ -35,7 +35,7 @@ export default function CalendarFiltersComponent({ filters, onFiltersChange, onE
   const updateFilter = (key: keyof CalendarFilters, value: string | undefined) => {
     onFiltersChange({
       ...filters,
-      [key]: value || undefined,
+      [key]: value === 'all' || !value ? undefined : (value as any),
     });
   };
 
@@ -54,14 +54,14 @@ export default function CalendarFiltersComponent({ filters, onFiltersChange, onE
       <div className="flex items-center gap-2 flex-1">
         {/* Provider Filter */}
         <Select
-          value={filters.providerId || ''}
+          value={filters.providerId ?? 'all'}
           onValueChange={(value) => updateFilter('providerId', value)}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Providers" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Providers</SelectItem>
+            <SelectItem value="all">All Providers</SelectItem>
             {providers.map((provider) => (
               <SelectItem key={provider.id} value={provider.id}>
                 {provider.display_name}
@@ -75,14 +75,14 @@ export default function CalendarFiltersComponent({ filters, onFiltersChange, onE
 
         {/* Room Filter */}
         <Select
-          value={filters.roomId || ''}
+          value={filters.roomId ?? 'all'}
           onValueChange={(value) => updateFilter('roomId', value)}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Rooms" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Rooms</SelectItem>
+            <SelectItem value="all">All Rooms</SelectItem>
             {rooms.map((room) => (
               <SelectItem key={room.id} value={room.id}>
                 {room.name}
@@ -93,14 +93,14 @@ export default function CalendarFiltersComponent({ filters, onFiltersChange, onE
 
         {/* Status Filter */}
         <Select
-          value={filters.status || ''}
+          value={filters.status ?? 'all'}
           onValueChange={(value) => updateFilter('status', value)}
         >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             {statusOptions.map((status) => (
               <SelectItem key={status.value} value={status.value}>
                 {status.label}

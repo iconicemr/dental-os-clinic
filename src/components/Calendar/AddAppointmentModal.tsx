@@ -348,12 +348,12 @@ export default function AddAppointmentModal({
                 name="provider_id"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <Select value={field.value ?? 'none'} onValueChange={(v) => field.onChange(v === 'none' ? undefined : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Provider" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Provider</SelectItem>
+                      <SelectItem value="none">No Provider</SelectItem>
                       {providers.map((provider) => (
                         <SelectItem key={provider.id} value={provider.id}>
                           {provider.display_name}
@@ -381,12 +381,12 @@ export default function AddAppointmentModal({
                 name="room_id"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <Select value={field.value ?? 'none'} onValueChange={(v) => field.onChange(v === 'none' ? undefined : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Room" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Room</SelectItem>
+                      <SelectItem value="none">No Room</SelectItem>
                       {rooms.map((room) => (
                         <SelectItem key={room.id} value={room.id}>
                           {room.name}

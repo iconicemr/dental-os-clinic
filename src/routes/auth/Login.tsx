@@ -11,7 +11,7 @@ import { PasswordChangeModal } from '@/components/auth/PasswordChangeModal';
 import { Stethoscope, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
+      const email = `${code}@iconic.local`;
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -92,13 +93,13 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="code">Staff Code</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="doctor@iconiclinic.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="code"
+                type="text"
+                placeholder="admin"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
                 required
                 disabled={isLoading}
                 className="medical-transition"

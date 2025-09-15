@@ -50,25 +50,25 @@ export default function Header() {
 
   return (
     <header className="border-b bg-card medical-shadow">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Logo and Title */}
-        <div className="flex items-center space-x-3">
-          <div className="bg-primary text-primary-foreground p-2 rounded-md">
-            <Stethoscope className="h-5 w-5" />
+        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+          <div className="bg-primary text-primary-foreground p-1.5 sm:p-2 rounded-md shrink-0">
+            <Stethoscope className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold">IconiDent OS</h1>
-            <p className="text-xs text-muted-foreground">Dental Clinic Management</p>
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold truncate">IconiDent OS</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Dental Clinic Management</p>
           </div>
         </div>
 
-        {/* Middle section with clinic selector */}
-        <div className="flex items-center space-x-4">
+        {/* Middle section with clinic selector - hidden on mobile */}
+        <div className="hidden md:flex items-center space-x-4">
           {clinics.length > 1 && <ClinicSelector />}
         </div>
 
         {/* Right section with user menu */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -76,7 +76,7 @@ export default function Header() {
                 <div className="bg-primary-soft text-primary p-1.5 rounded-full">
                   <User className="h-4 w-4" />
                 </div>
-                <div className="text-left">
+                <div className="text-left hidden sm:block">
                   <p className="text-sm font-medium">{profile?.full_name}</p>
                   <p className="text-xs text-muted-foreground capitalize">{profile?.role}</p>
                 </div>

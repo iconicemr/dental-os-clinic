@@ -86,11 +86,110 @@ export default function FrontDesk() {
       {/* Three Column Layout */}
       <div className="flex-1 overflow-hidden">
         {isMobile ? (
-          // Mobile: Tabs
-          <div className="h-full p-4">
-            {/* Add mobile tab implementation */}
-            <div className="text-center text-muted-foreground">
-              Mobile layout coming soon
+          // Mobile: Vertical Stack with Tabs
+          <div className="h-full overflow-hidden">
+            <div className="flex overflow-x-auto border-b bg-card px-4 py-2 space-x-1">
+              <Button variant="ghost" size="sm" className="shrink-0 text-xs">
+                <Calendar className="mr-1 h-3 w-3" />
+                Today
+              </Button>
+              <Button variant="ghost" size="sm" className="shrink-0 text-xs">
+                <Clock className="mr-1 h-3 w-3" />
+                Arrived
+              </Button>
+              <Button variant="ghost" size="sm" className="shrink-0 text-xs">
+                <Stethoscope className="mr-1 h-3 w-3" />
+                Ready
+              </Button>
+              <Button variant="ghost" size="sm" className="shrink-0 text-xs">
+                <Activity className="mr-1 h-3 w-3" />
+                In-Chair
+              </Button>
+              <Button variant="ghost" size="sm" className="shrink-0 text-xs">
+                <CheckCircle className="mr-1 h-3 w-3" />
+                Done
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Today's Appointments */}
+              <div className="bg-card rounded-lg border">
+                <div className="border-b p-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-green-500" />
+                    <h2 className="font-semibold text-sm">Today's Appointments</h2>
+                  </div>
+                </div>
+                <div className="p-2">
+                  <TodayAppointments 
+                    searchTerm=""
+                    onPatientSelect={handlePatientSelect}
+                  />
+                </div>
+              </div>
+
+              {/* Queues */}
+              <div className="space-y-3">
+                <div className="bg-card rounded-lg border">
+                  <div className="border-b p-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-yellow-500" />
+                      <h2 className="font-semibold text-sm">Arrived & Unsigned</h2>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <ArrivedQueue 
+                      searchTerm=""
+                      onPatientSelect={handlePatientSelect}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-card rounded-lg border">
+                  <div className="border-b p-3">
+                    <div className="flex items-center gap-2">
+                      <Stethoscope className="h-4 w-4 text-blue-500" />
+                      <h2 className="font-semibold text-sm">Ready Queue</h2>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <ReadyQueue 
+                      searchTerm=""
+                      onPatientSelect={handlePatientSelect}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-card rounded-lg border">
+                  <div className="border-b p-3">
+                    <div className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      <h2 className="font-semibold text-sm">In-Chair</h2>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <InChairQueue 
+                      searchTerm=""
+                      onPatientSelect={handlePatientSelect}
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-card rounded-lg border">
+                  <div className="border-b p-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-emerald-500" />
+                      <h2 className="font-semibold text-sm">Completed</h2>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <CompletedQueue 
+                      searchTerm=""
+                      onPatientSelect={handlePatientSelect}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

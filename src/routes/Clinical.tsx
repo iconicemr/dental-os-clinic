@@ -20,30 +20,50 @@ export default function Clinical() {
         />
       </div>
       
-      {/* Three vertical cards layout */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
-        {/* A) Quick Finding */}
-        <div className="w-80 min-w-80 flex-shrink-0">
-          <QuickFinding 
-            visitId={activeVisitId}
-            patient={activePatient}
-          />
+      {/* Responsive layout */}
+      <div className="flex-1 overflow-hidden">
+        <div className="hidden lg:flex gap-4 p-4 h-full">
+          {/* Desktop: Three vertical cards */}
+          <div className="w-80 min-w-80 flex-shrink-0">
+            <QuickFinding 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+          </div>
+          
+          <div className="flex-1 min-w-96">
+            <FindingsList 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+          </div>
+          
+          <div className="w-96 min-w-96 flex-shrink-0">
+            <DoctorPlanExecution 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+          </div>
         </div>
-        
-        {/* B) Findings */}
-        <div className="flex-1 min-w-96">
-          <FindingsList 
-            visitId={activeVisitId}
-            patient={activePatient}
-          />
-        </div>
-        
-        {/* C) Doctor: Plan & Execute */}
-        <div className="w-96 min-w-96 flex-shrink-0">
-          <DoctorPlanExecution 
-            visitId={activeVisitId}
-            patient={activePatient}
-          />
+
+        {/* Mobile: Stacked cards with tabs */}
+        <div className="lg:hidden h-full overflow-y-auto">
+          <div className="p-4 space-y-4">
+            <QuickFinding 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+            
+            <FindingsList 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+            
+            <DoctorPlanExecution 
+              visitId={activeVisitId}
+              patient={activePatient}
+            />
+          </div>
         </div>
       </div>
     </div>

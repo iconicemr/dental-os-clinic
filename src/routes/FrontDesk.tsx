@@ -1,11 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { UserPlus, Search, Calendar, Clock, Stethoscope, Activity, CheckCircle } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
+import { UserPlus, Calendar, Clock, Stethoscope, Activity, CheckCircle } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFrontDeskRealtime } from '@/hooks/useFrontDeskRealtime';
-import QuickAddDrawer from './FrontDesk/QuickAddDrawer';
+import AddPatientModal from './FrontDesk/AddPatientModal';
 import ArrivedQueue from './FrontDesk/ArrivedQueue';
 import ReadyQueue from './FrontDesk/ReadyQueue';
 import TodayAppointments from './FrontDesk/TodayAppointments';
@@ -21,13 +19,9 @@ export default function FrontDesk() {
   
   // Enable real-time updates for all front desk components
   useFrontDeskRealtime();
-  
-  // Search state
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Modal states
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [addPatientOpen, setAddPatientOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [quickSwitcherOpen, setQuickSwitcherOpen] = useState(false);
 
@@ -40,16 +34,10 @@ export default function FrontDesk() {
         setQuickSwitcherOpen(true);
       }
       
-      // / to focus search
-      if (e.key === '/') {
-        e.preventDefault();
-        document.getElementById('global-search')?.focus();
-      }
-      
       // A for Add Patient (when not in input)
       if (e.key === 'a' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
-        setQuickAddOpen(true);
+        setAddPatientOpen(true);
       }
     };
 
@@ -61,16 +49,15 @@ export default function FrontDesk() {
     setSelectedPatientId(patientId);
   }, []);
 
-  const handleQuickAdd = useCallback(() => {
-    setQuickAddOpen(true);
+  const handleAddPatient = useCallback(() => {
+    setAddPatientOpen(true);
   }, []);
 
-  const handlePatientCreated = useCallback(() => {
+  const handleAddComplete = useCallback(() => {
     toast({
-      title: "Patient checked in",
-      description: "Patient created and ready for intake",
+      title: "Action completed",
+      description: "Front desk queues will update automatically",
     });
-    // Refresh the queues
   }, [toast]);
 
   return (
@@ -80,31 +67,18 @@ export default function FrontDesk() {
         <div className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Front Desk Console</h1>
+              <h1 className="text-2xl font-bold text-foreground">Front Desk</h1>
               <p className="text-sm text-muted-foreground">
-                Universal patient flow • Press <kbd className="px-1 py-0.5 text-xs bg-muted rounded">Ctrl+K</kbd> for quick search
+                Patient flow management • Press <kbd className="px-1 py-0.5 text-xs bg-muted rounded">A</kbd> to add patient
               </p>
             </div>
             
             <div className="flex items-center gap-2">
-              <Button onClick={handleQuickAdd} className="shrink-0">
+              <Button onClick={handleAddPatient} className="shrink-0">
                 <UserPlus className="mr-2 h-4 w-4" />
-                Quick Add & Check-in
+                Add
               </Button>
             </div>
-          </div>
-
-          {/* Universal Search */}
-          <div className="relative mt-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              id="global-search"
-              placeholder="ابحث بالاسم العربي أو رقم الهاتف (Press / to focus)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-right"
-              dir="rtl"
-            />
           </div>
         </div>
       </div>
@@ -131,7 +105,7 @@ export default function FrontDesk() {
               </div>
               <div className="p-2">
                 <TodayAppointments 
-                  searchTerm={debouncedSearchTerm}
+                  searchTerm=""
                   onPatientSelect={handlePatientSelect}
                 />
               </div>
@@ -152,7 +126,7 @@ export default function FrontDesk() {
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   <ArrivedQueue 
-                    searchTerm={debouncedSearchTerm}
+                    searchTerm=""
                     onPatientSelect={handlePatientSelect}
                   />
                 </div>
@@ -171,7 +145,7 @@ export default function FrontDesk() {
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   <ReadyQueue 
-                    searchTerm={debouncedSearchTerm}
+                    searchTerm=""
                     onPatientSelect={handlePatientSelect}
                   />
                 </div>
@@ -190,7 +164,7 @@ export default function FrontDesk() {
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   <InChairQueue 
-                    searchTerm={debouncedSearchTerm}
+                    searchTerm=""
                     onPatientSelect={handlePatientSelect}
                   />
                 </div>
@@ -209,7 +183,7 @@ export default function FrontDesk() {
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   <CompletedQueue 
-                    searchTerm={debouncedSearchTerm}
+                    searchTerm=""
                     onPatientSelect={handlePatientSelect}
                   />
                 </div>
@@ -219,11 +193,11 @@ export default function FrontDesk() {
         )}
       </div>
 
-      {/* Drawers and Overlays */}
-      <QuickAddDrawer
-        isOpen={quickAddOpen}
-        onClose={() => setQuickAddOpen(false)}
-        onPatientCreated={handlePatientCreated}
+      {/* Modals and Overlays */}
+      <AddPatientModal
+        isOpen={addPatientOpen}
+        onClose={() => setAddPatientOpen(false)}
+        onComplete={handleAddComplete}
       />
 
       <GlobalPatientSlideOver

@@ -65,7 +65,7 @@ const chronicConditionsList = [
   { key: 'heart', label: 'أمراض القلب' },
   { key: 'diabetes', label: 'أمراض السكر' },
   { key: 'hypertension', label: 'أمراض الضغط' },
-  { key: 'liver', label: 'أمراض الكبد' },
+  { key: 'liver', label: 'أمراض ال��بد' },
   { key: 'kidney', label: 'أمراض الكلى' },
   { key: 'respiratory', label: 'أمراض الصدر والرئة' },
   { key: 'thyroid', label: 'أمراض الغدة' },
@@ -245,7 +245,7 @@ export default function IntakeForm() {
 
       if (intakeError) throw intakeError;
 
-      // Update patient with intake data
+      // Update patient with intake data and mark as ready
       const { error: patientError } = await supabase
         .from('patients')
         .update({
@@ -259,19 +259,26 @@ export default function IntakeForm() {
           prior_surgeries: data.hasSurgeries ? data.surgeries : null,
           smoker: data.isSmoker,
           reason_for_visit: data.reasonForVisit,
+          status: 'ready'
         })
         .eq('id', patientId);
 
       if (patientError) throw patientError;
 
+      // Sync any related appointments to ready
+      await supabase
+        .from('appointments')
+        .update({ status: 'ready' })
+        .eq('patient_id', patientId);
+
       toast({
         title: "تم الحفظ بنجاح",
-        description: "تم حفظ استمارة المريض وسيتم تحويله إلى قائمة الانتظار",
+        description: "تم حفظ الاستمارة وتم نقل المريض إلى قائمة الجاهزين",
       });
 
       // Navigate back to intake list
       navigate('/intake');
-      
+
     } catch (error) {
       console.error('Error saving intake form:', error);
       toast({
@@ -608,7 +615,7 @@ export default function IntakeForm() {
                     onTouchEnd={stopDrawing}
                   />
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-sm text-muted-foreground">استخدم إصبعك أو القلم للتوقيع في المربع أعلاه</p>
+                    <p className="text-sm text-muted-foreground">است��دم إصبعك أو القلم للتوقيع في المربع أعلاه</p>
                     <Button
                       type="button"
                       variant="ghost"

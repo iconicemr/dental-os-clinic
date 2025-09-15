@@ -172,19 +172,57 @@ export function useUpdatePatientStatusMutation() {
 
   return useMutation({
     mutationFn: async ({ patientId, status }: { patientId: string; status: PatientStatus }) => {
-      const { error } = await supabase
-        .from('patients')
-        .update({ status })
-        .eq('id', patientId);
+      // If setting to 'arrived', auto-skip intake if already signed (move to 'ready')
+      let nextStatus: PatientStatus = status;
+      if (status === 'arrived') {
+        const { data: intakeForm, error: intakeError } = await supabase
+          .from('intake_forms')
+          .select('id')
+          .eq('patient_id', patientId)
+          .eq('is_active', true)
+          .eq('active_signed', true)
+          .maybeSingle();
+        if (intakeError) throw intakeError;
+        if (intakeForm) {
+          nextStatus = 'ready';
+        }
+      }
 
-      if (error) throw error;
+      const { error: patientError } = await supabase
+        .from('patients')
+        .update({ status: nextStatus })
+        .eq('id', patientId);
+      if (patientError) throw patientError;
+
+      // Keep appointments in sync
+      const { error: apptError } = await supabase
+        .from('appointments')
+        .update({ status: nextStatus })
+        .eq('patient_id', patientId);
+      if (apptError) throw apptError;
+
+      return { nextStatus };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate patients lists/detail
       queryClient.invalidateQueries({ queryKey: ['patients'] });
       queryClient.invalidateQueries({ queryKey: ['patient'] });
+
+      // Invalidate front desk/intake related queries
+      queryClient.invalidateQueries({ queryKey: ['today-appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['in-chair-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['completed-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['intake-patients'] });
+
+      const desc = data?.nextStatus === 'ready'
+        ? 'Patient moved to ready (intake already signed).'
+        : 'Patient status has been updated successfully.';
+
       toast({
         title: 'Status updated',
-        description: 'Patient status has been updated successfully.',
+        description: desc,
       });
     },
     onError: (error: any) => {

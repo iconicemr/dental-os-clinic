@@ -15,7 +15,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
   if (!supabaseUrl) {
     return new Response(JSON.stringify({ error: "SUPABASE_URL not set" }), {
@@ -30,7 +30,7 @@ serve(async (req) => {
     });
   }
   if (!anonKey) {
-    return new Response(JSON.stringify({ error: "SUPABASE_PUBLISHABLE_KEY not set" }), {
+    return new Response(JSON.stringify({ error: "SUPABASE_ANON_KEY not set" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
@@ -54,12 +54,12 @@ serve(async (req) => {
       );
     }
 
-    // Client scoped to the caller to read their user and role
-    const callerClient = createClient(supabaseUrl, anonKey, {
+    // Verifier client scoped to the caller to read their user and role
+    const verifier = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
     });
 
-    const { data: authUserData, error: authUserErr } = await callerClient.auth.getUser();
+    const { data: authUserData, error: authUserErr } = await verifier.auth.getUser();
     if (authUserErr || !authUserData?.user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),

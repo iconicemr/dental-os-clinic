@@ -13,6 +13,8 @@ interface Profile {
   phone?: string;
   created_at: string;
   updated_at: string;
+  must_change_password?: boolean;
+  last_password_reset_at?: string;
 }
 
 interface Clinic {
@@ -45,7 +47,7 @@ export function useMe() {
       // 1. Get or create profile
       let { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, full_name, role, phone, created_at, updated_at')
+        .select('user_id, full_name, role, phone, created_at, updated_at, must_change_password, last_password_reset_at')
         .eq('user_id', user.id)
         .single();
 
@@ -58,7 +60,7 @@ export function useMe() {
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             role: 'assistant' as UserRole
           })
-          .select('user_id, full_name, role, phone, created_at, updated_at')
+          .select('user_id, full_name, role, phone, created_at, updated_at, must_change_password, last_password_reset_at')
           .single();
 
         if (createError) throw createError;

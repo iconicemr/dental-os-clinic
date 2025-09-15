@@ -768,24 +768,36 @@ export type Database = {
         Row: {
           created_at: string
           full_name: string | null
+          is_active: boolean
+          last_password_reset_at: string | null
+          must_change_password: boolean
           phone: string | null
           role: Database["public"]["Enums"]["user_role_enum"]
+          staff_code: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           full_name?: string | null
+          is_active?: boolean
+          last_password_reset_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role_enum"]
+          staff_code?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           full_name?: string | null
+          is_active?: boolean
+          last_password_reset_at?: string | null
+          must_change_password?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role_enum"]
+          staff_code?: string | null
           updated_at?: string
           user_id?: string
         }

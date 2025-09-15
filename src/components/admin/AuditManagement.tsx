@@ -68,7 +68,7 @@ export function AuditManagement() {
       ['Timestamp', 'User', 'Operation', 'Table', 'Record ID', 'Changes'].join(','),
       ...auditLog.map(entry => [
         entry.changed_at,
-        entry.changed_by || 'System',
+        (entry as any).profiles?.full_name || entry.changed_by || 'System',
         entry.operation,
         entry.table_name,
         entry.row_pk || '',

@@ -1,5 +1,6 @@
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { GlobalPasswordChangeCheck } from '@/components/auth/GlobalPasswordChangeCheck';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export default function AppShell({ children }: AppShellProps) {
           {children}
         </main>
       </div>
+      <GlobalPasswordChangeCheck />
     </div>
   );
 }

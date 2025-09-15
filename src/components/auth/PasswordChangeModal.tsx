@@ -53,12 +53,15 @@ export function PasswordChangeModal({ open, onOpenChange, required = false }: Pa
       if (error) throw error;
 
       // Update the profile to clear the must_change_password flag
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ must_change_password: false })
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      const { data: currentUser } = await supabase.auth.getUser();
+      if (currentUser.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ must_change_password: false })
+          .eq('user_id', currentUser.user.id);
 
-      if (profileError) throw profileError;
+        if (profileError) console.error('Profile update error:', profileError);
+      }
 
       toast({
         title: 'Password updated successfully',

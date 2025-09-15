@@ -79,13 +79,7 @@ export function useAdmin() {
       queryFn: async () => {
         const { data, error } = await supabase
           .from('profiles')
-          .select(`
-            *,
-            staff_clinics(
-              clinic_id,
-              clinics(name)
-            )
-          `)
+          .select('*')
           .order('created_at');
 
         if (error) throw error;

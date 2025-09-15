@@ -42,7 +42,7 @@ const updateAppointmentSchema = z.object({
   room_id: z.string().optional(),
   starts_at: z.string().min(1, 'Start time is required'),
   ends_at: z.string().min(1, 'End time is required'),
-  status: z.string().min(1, 'Status is required'),
+  status: z.enum(['planned', 'confirmed', 'arrived', 'ready', 'in_chair', 'completed', 'no_show', 'cancelled']),
   notes: z.string().optional(),
 });
 
@@ -108,9 +108,12 @@ export default function AppointmentDetailsDrawer({
       await updateAppointmentMutation.mutateAsync({
         id: appointment.id,
         updates: {
-          ...data,
           provider_id: data.provider_id || null,
           room_id: data.room_id || null,
+          starts_at: data.starts_at,
+          ends_at: data.ends_at,
+          status: data.status,
+          notes: data.notes || null,
         },
       });
 
@@ -150,7 +153,7 @@ export default function AppointmentDetailsDrawer({
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: CalendarAppointment['status']) => {
     if (!appointment) return;
 
     try {
@@ -172,15 +175,20 @@ export default function AppointmentDetailsDrawer({
     }
   };
 
-  const getNextStatus = (currentStatus: string): string | null => {
-    const statusFlow = {
+  const getNextStatus = (currentStatus: CalendarAppointment['status']): CalendarAppointment['status'] | null => {
+    const statusFlow: Record<CalendarAppointment['status'], CalendarAppointment['status']> = {
       planned: 'confirmed',
       confirmed: 'arrived',
       arrived: 'ready',
       ready: 'in_chair',
       in_chair: 'completed',
+      completed: 'completed', // No next status
+      cancelled: 'cancelled', // No next status
+      no_show: 'no_show', // No next status
     };
-    return statusFlow[currentStatus as keyof typeof statusFlow] || null;
+    
+    const nextStatus = statusFlow[currentStatus];
+    return nextStatus === currentStatus ? null : nextStatus;
   };
 
   if (!appointment) return null;

@@ -10,7 +10,7 @@ export interface CalendarAppointment {
   provider_id: string | null;
   starts_at: string;
   ends_at: string;
-  status: string;
+  status: 'planned' | 'confirmed' | 'arrived' | 'ready' | 'in_chair' | 'completed' | 'no_show' | 'cancelled';
   notes: string | null;
   patients: {
     id: string;
@@ -32,7 +32,7 @@ export interface CalendarFilters {
   providerId?: string;
   roomId?: string;
   clinicId?: string;
-  status?: string;
+  status?: 'planned' | 'confirmed' | 'arrived' | 'ready' | 'in_chair' | 'completed' | 'no_show' | 'cancelled';
 }
 
 export function useCalendarAppointments(
@@ -152,7 +152,7 @@ export function useCreateAppointment() {
       room_id?: string;
       starts_at: string;
       ends_at: string;
-      status: string;
+      status: 'planned' | 'confirmed' | 'arrived' | 'ready' | 'in_chair' | 'completed' | 'no_show' | 'cancelled';
       notes?: string;
     }) => {
       const { data, error } = await supabase

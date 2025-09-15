@@ -11,6 +11,7 @@ import AppShell from "@/components/AppShell/AppShell";
 import Login from "@/routes/auth/Login";
 import Dashboard from "@/routes/Dashboard";
 import Setup from "@/routes/Setup";
+import FrontDesk from "@/routes/FrontDesk";
 import Patients from "@/routes/Patients";
 import Intake from "@/routes/Intake";
 import WaitingRoom from "@/routes/WaitingRoom";
@@ -43,6 +44,14 @@ const App = () => (
           } />
           
           <Route path="/setup" element={<Setup />} />
+          
+          <Route path="/front-desk" element={
+            <ProtectedRoute>
+              <AppShell>
+                <FrontDesk />
+              </AppShell>
+            </ProtectedRoute>
+          } />
           
           <Route path="/patients" element={
             <ProtectedRoute>

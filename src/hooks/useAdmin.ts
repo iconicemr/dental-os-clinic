@@ -185,7 +185,10 @@ export function useAdmin() {
       queryFn: async () => {
         let query = supabase
           .from('audit_log')
-          .select('*')
+          .select(`
+            *,
+            profiles!audit_log_changed_by_fkey(full_name)
+          `)
           .order('changed_at', { ascending: false })
           .limit(1000);
 
@@ -196,7 +199,7 @@ export function useAdmin() {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data as AuditLogEntry[];
+        return data as (AuditLogEntry & { profiles?: { full_name?: string } })[];
       },
     });
   };
@@ -272,6 +275,29 @@ export function useAdmin() {
     onError: (error) => {
       toast({
         title: 'Error updating staff role',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete staff user
+  const deleteStaffUser = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { user_id: userId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({ title: 'Staff member deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error deleting staff member',
         description: error.message,
         variant: 'destructive',
       });
@@ -496,6 +522,7 @@ export function useAdmin() {
     createStaffUser,
     resetStaffPassword,
     updateStaffRole,
+    deleteStaffUser,
     createProvider,
     updateProvider,
     createRoom,

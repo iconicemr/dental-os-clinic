@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useMe } from '@/hooks/useMe';
+import { PasswordChangeModal } from '@/components/auth/PasswordChangeModal';
 import { Stethoscope, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -21,13 +23,36 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      // Check if user must change password
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('must_change_password')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error checking profile:', profileError);
+        }
+
+        if (profile?.must_change_password) {
+          setShowPasswordChange(true);
+          toast({
+            title: "Password Change Required",
+            description: "You must change your temporary password before continuing.",
+            variant: "default",
+          });
+          return;
+        }
       }
 
       toast({
@@ -117,6 +142,16 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+
+      <PasswordChangeModal
+        open={showPasswordChange}
+        onOpenChange={(open) => {
+          if (!open) {
+            navigate('/');
+          }
+        }}
+        required={true}
+      />
     </div>
   );
 }

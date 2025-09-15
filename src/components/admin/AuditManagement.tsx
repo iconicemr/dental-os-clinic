@@ -181,7 +181,9 @@ export function AuditManagement() {
                         {format(new Date(entry.changed_at), 'MMM dd, HH:mm:ss')}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {entry.changed_by ? (
+                        {entry.profiles?.full_name ? (
+                          <Badge variant="outline">{entry.profiles.full_name}</Badge>
+                        ) : entry.changed_by ? (
                           <Badge variant="outline">{entry.changed_by.slice(0, 8)}...</Badge>
                         ) : (
                           <Badge variant="secondary">System</Badge>

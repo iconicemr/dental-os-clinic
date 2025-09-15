@@ -6,6 +6,7 @@ import { ClipboardCheck, Play, CheckCircle2, Ban, Camera } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { ClinicalPatient } from '@/hooks/useClinicalWorkflow';
+import { PlanBuilderPanel } from './PlanBuilderPanel';
 
 interface DoctorPanelProps {
   visitId: string | null;
@@ -136,177 +137,163 @@ export function DoctorPanel({ visitId, patient }: DoctorPanelProps) {
     cancelled: planRows?.filter(row => row.status === 'cancelled') || [],
   };
 
-  if (!visitId) {
-    return (
-      <div className="w-96 border-l bg-card flex items-center justify-center">
-        <div className="text-center p-6">
-          <ClipboardCheck className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            Select an active visit to see the treatment plan
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-96 border-l bg-card flex flex-col">
-      {/* Plan Validation */}
-      <Card className="rounded-none border-0 border-b">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <ClipboardCheck className="h-4 w-4" />
-            Plan Validation
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3">
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-3">
-              Coming soon: Validate findings into priced procedure plan
-            </p>
-            <Button size="sm" disabled>
-              Validate Plan
-            </Button>
+    <div className="flex gap-4 h-full">
+      {/* Plan Builder Panel */}
+      <PlanBuilderPanel visitId={visitId} patient={patient} />
+      
+      {/* Execution Status Panel */}
+      <div className="w-80 border-l bg-card flex flex-col">
+        {!visitId ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center p-6">
+              <ClipboardCheck className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Select an active visit to see procedures
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Mini Kanban */}
-      <Card className="rounded-none border-0 border-b flex-1">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">
-            Procedure Status ({planRows?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3 flex-1">
-          <ScrollArea className="h-full">
-            <div className="space-y-4">
-              {/* Planned */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                  <span className="text-sm font-medium">Planned ({groupedRows.planned.length})</span>
-                </div>
-                <div className="space-y-2 ml-5">
-                  {groupedRows.planned.map((row) => (
-                    <div key={row.id} className="p-2 bg-gray-50 rounded border text-xs">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium truncate">{row.treatments.name_en}</span>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <Play className="h-3 w-3" />
-                        </Button>
+        ) : (
+          <>
+            {/* Mini Kanban */}
+            <Card className="rounded-none border-0 border-b flex-1">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  Procedure Status ({planRows?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 flex-1">
+                <ScrollArea className="h-full">
+                  <div className="space-y-4">
+                    {/* Planned */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span className="text-sm font-medium">Planned ({groupedRows.planned.length})</span>
                       </div>
-                      <div className="flex items-center gap-1 mb-1">
-                        {formatToothLocation(row) && (
-                          <Badge variant="outline" className="text-xs">
-                            {formatToothLocation(row)}
-                          </Badge>
-                        )}
-                        <Badge className={getForWhenColor(row.for_when)}>
-                          {row.for_when}
-                        </Badge>
+                      <div className="space-y-2 ml-5">
+                        {groupedRows.planned.map((row) => (
+                          <div key={row.id} className="p-2 bg-gray-50 rounded border text-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium truncate">{row.treatments.name_en}</span>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <Play className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-1 mb-1">
+                              {formatToothLocation(row) && (
+                                <Badge variant="outline" className="text-xs">
+                                  {formatToothLocation(row)}
+                                </Badge>
+                              )}
+                              <Badge className={getForWhenColor(row.for_when)}>
+                                {row.for_when}
+                              </Badge>
+                            </div>
+                            {row.price > 0 && (
+                              <div className="text-muted-foreground">EGP {row.price}</div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {row.price > 0 && (
-                        <div className="text-muted-foreground">EGP {row.price}</div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* In Progress */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                  <span className="text-sm font-medium">In Progress ({groupedRows.in_progress.length})</span>
-                </div>
-                <div className="space-y-2 ml-5">
-                  {groupedRows.in_progress.map((row) => (
-                    <div key={row.id} className="p-2 bg-blue-50 rounded border text-xs">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium truncate">{row.treatments.name_en}</span>
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                          <CheckCircle2 className="h-3 w-3" />
-                        </Button>
+                    {/* In Progress */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-400"></div>
+                        <span className="text-sm font-medium">In Progress ({groupedRows.in_progress.length})</span>
                       </div>
-                      <div className="flex items-center gap-1 mb-1">
-                        {formatToothLocation(row) && (
-                          <Badge variant="outline" className="text-xs">
-                            {formatToothLocation(row)}
-                          </Badge>
-                        )}
-                        <Badge className={getForWhenColor(row.for_when)}>
-                          {row.for_when}
-                        </Badge>
+                      <div className="space-y-2 ml-5">
+                        {groupedRows.in_progress.map((row) => (
+                          <div key={row.id} className="p-2 bg-blue-50 rounded border text-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-medium truncate">{row.treatments.name_en}</span>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <CheckCircle2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-1 mb-1">
+                              {formatToothLocation(row) && (
+                                <Badge variant="outline" className="text-xs">
+                                  {formatToothLocation(row)}
+                                </Badge>
+                              )}
+                              <Badge className={getForWhenColor(row.for_when)}>
+                                {row.for_when}
+                              </Badge>
+                            </div>
+                            {row.price > 0 && (
+                              <div className="text-muted-foreground">EGP {row.price}</div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {row.price > 0 && (
-                        <div className="text-muted-foreground">EGP {row.price}</div>
-                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Complete */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <span className="text-sm font-medium">Complete ({groupedRows.complete.length})</span>
-                </div>
-                <div className="space-y-2 ml-5">
-                  {groupedRows.complete.map((row) => (
-                    <div key={row.id} className="p-2 bg-green-50 rounded border text-xs">
-                      <div className="font-medium truncate mb-1">{row.treatments.name_en}</div>
-                      <div className="flex items-center gap-1 mb-1">
-                        {formatToothLocation(row) && (
-                          <Badge variant="outline" className="text-xs">
-                            {formatToothLocation(row)}
-                          </Badge>
-                        )}
-                        <Badge className={getForWhenColor(row.for_when)}>
-                          {row.for_when}
-                        </Badge>
+                    {/* Complete */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                        <span className="text-sm font-medium">Complete ({groupedRows.complete.length})</span>
                       </div>
-                      {row.price > 0 && (
-                        <div className="text-muted-foreground">EGP {row.price}</div>
-                      )}
+                      <div className="space-y-2 ml-5">
+                        {groupedRows.complete.map((row) => (
+                          <div key={row.id} className="p-2 bg-green-50 rounded border text-xs">
+                            <div className="font-medium truncate mb-1">{row.treatments.name_en}</div>
+                            <div className="flex items-center gap-1 mb-1">
+                              {formatToothLocation(row) && (
+                                <Badge variant="outline" className="text-xs">
+                                  {formatToothLocation(row)}
+                                </Badge>
+                              )}
+                              <Badge className={getForWhenColor(row.for_when)}>
+                                {row.for_when}
+                              </Badge>
+                            </div>
+                            {row.price > 0 && (
+                              <div className="text-muted-foreground">EGP {row.price}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
 
-      {/* X-ray Gallery */}
-      <Card className="rounded-none border-0">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <Camera className="h-4 w-4" />
-            X-rays ({xrayFiles?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-3 pb-3">
-          {xrayFiles?.length ? (
-            <div className="grid grid-cols-2 gap-2">
-              {xrayFiles.slice(0, 4).map((file) => (
-                <div key={file.id} className="aspect-square bg-gray-100 rounded overflow-hidden">
-                  <img 
-                    src={file.file_url} 
-                    alt="X-ray"
-                    className="w-full h-full object-cover cursor-pointer hover:opacity-80"
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 text-sm text-muted-foreground">
-              No X-rays uploaded yet
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {/* X-ray Gallery */}
+            <Card className="rounded-none border-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                  <Camera className="h-4 w-4" />
+                  X-rays ({xrayFiles?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                {xrayFiles?.length ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {xrayFiles.slice(0, 4).map((file) => (
+                      <div key={file.id} className="aspect-square bg-gray-100 rounded overflow-hidden">
+                        <img 
+                          src={file.file_url} 
+                          alt="X-ray"
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-80"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    No X-rays uploaded yet
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }

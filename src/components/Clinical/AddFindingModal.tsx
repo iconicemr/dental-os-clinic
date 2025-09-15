@@ -64,7 +64,7 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
         // Edit mode - populate form
         setStep(3); // Skip to final step for editing
         setSelectedDiagnosis(null); // Will be set when diagnoses load
-        setToothSet(finding.tooth_set || 'Permanent');
+        setToothSet(finding.tooth_set === 'primary' ? 'Primary' : 'Permanent');
         setQuadrant(finding.quadrant || '');
         setToothNumber(finding.tooth_number?.toString() || '');
         setXrayFlag(finding.xray_flag || false);
@@ -74,7 +74,7 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
         setStep(1);
         setSelectedDiagnosis(null);
         setSelectedTreatment('');
-        setToothSet('Permanent');
+        setToothSet(getDefaultToothSet());
         setQuadrant('');
         setToothNumber('');
         setXrayFlag(false);
@@ -82,6 +82,26 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
       }
     }
   }, [open, finding]);
+
+  // Get default tooth set based on patient age
+  const getDefaultToothSet = () => {
+    if (!patient?.dob) return 'Permanent';
+    
+    const age = new Date().getFullYear() - new Date(patient.dob).getFullYear();
+    if (age <= 5) return 'Primary';
+    if (age > 13) return 'Permanent';
+    return 'Permanent'; // For mixed dentition, let user choose
+  };
+
+  // Get age bracket for tooth selection logic
+  const getAgeBracket = () => {
+    if (!patient?.dob) return 'adult';
+    
+    const age = new Date().getFullYear() - new Date(patient.dob).getFullYear();
+    if (age <= 5) return 'primary';
+    if (age <= 13) return 'mixed';
+    return 'permanent';
+  };
 
   // Fetch diagnoses
   const { data: diagnoses } = useQuery({
@@ -212,11 +232,11 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
   };
 
   const getToothNumbers = () => {
-    if (!patient?.ageBracket) return [];
+    const ageBracket = getAgeBracket();
     
-    if (patient.ageBracket === 'Primary') {
+    if (ageBracket === 'primary') {
       return Array.from({ length: 5 }, (_, i) => (i + 1).toString());
-    } else if (patient.ageBracket === 'Mixed') {
+    } else if (ageBracket === 'mixed') {
       return toothSet === 'Primary' 
         ? Array.from({ length: 5 }, (_, i) => (i + 1).toString())
         : Array.from({ length: 8 }, (_, i) => (i + 1).toString());
@@ -316,7 +336,7 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
                   Select Tooth Location
                 </Label>
                 
-                {patient?.ageBracket === 'Mixed' && (
+                {getAgeBracket() === 'mixed' && (
                   <div className="mb-4">
                     <Label className="text-sm mb-2 block">Tooth Set</Label>
                     <Select value={toothSet} onValueChange={(value: 'Primary' | 'Permanent') => setToothSet(value)}>
@@ -369,7 +389,7 @@ export function AddFindingModal({ visitId, patient, finding, open, onClose }: Ad
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <div className="text-sm font-medium text-blue-900">
                       Selected: {quadrant} #{toothNumber}
-                      {patient?.ageBracket === 'Mixed' && ` (${toothSet})`}
+                      {getAgeBracket() === 'mixed' && ` (${toothSet})`}
                     </div>
                   </div>
                 )}

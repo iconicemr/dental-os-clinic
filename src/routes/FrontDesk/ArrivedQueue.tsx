@@ -31,9 +31,8 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
   });
 
   const handleOpenIntake = (patientId: string) => {
-    // This would open the tablet intake form
-    // For now, we'll just select the patient to show their details
-    onPatientSelect(patientId);
+    // Open intake form in new tab
+    window.open(`/intake/form?patient=${patientId}`, '_blank');
   };
 
   if (isLoading) {
@@ -102,7 +101,7 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
             <Button
               size="sm"
               onClick={() => handleOpenIntake(patient.id)}
-              className="flex-1 text-xs"
+              className="flex-1 text-xs bg-blue-600 hover:bg-blue-700"
             >
               <FileText className="mr-1 h-3 w-3" />
               Open Intake

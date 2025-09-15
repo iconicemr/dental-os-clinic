@@ -61,7 +61,7 @@ const App = () => (
             </ProtectedRoute>
           } />
           
-          <Route path="/intake" element={
+          <Route path="/intake/*" element={
             <ProtectedRoute>
               <AppShell>
                 <Intake />

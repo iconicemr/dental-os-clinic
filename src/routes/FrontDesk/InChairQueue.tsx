@@ -45,7 +45,7 @@ export default function InChairQueue({ searchTerm, onPatientSelect }: InChairQue
         `)
         .eq('status', 'in_chair')
         .eq('visits.status', 'in_chair')
-        .order('visits.started_at', { ascending: true });
+        .order('updated_at', { ascending: true });
 
       if (searchTerm) {
         query = query.or(`arabic_full_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);

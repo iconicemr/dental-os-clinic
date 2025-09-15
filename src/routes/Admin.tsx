@@ -5,7 +5,7 @@ import { useMe } from '@/hooks/useMe';
 import { StaffManagement } from '@/components/admin/StaffManagement';
 import { ProvidersManagement } from '@/components/admin/ProvidersManagement';
 import { ConfigurationManagement } from '@/components/admin/ConfigurationManagement';
-import { CatalogManagement } from '@/components/admin/CatalogManagement';
+import { CatalogWorkspace } from '@/components/admin/CatalogWorkspace';
 import { AuditManagement } from '@/components/admin/AuditManagement';
 
 export default function Admin() {
@@ -72,7 +72,7 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="catalog" className="mt-8">
-            <CatalogManagement />
+            <CatalogWorkspace />
           </TabsContent>
 
           <TabsContent value="audit" className="mt-8">

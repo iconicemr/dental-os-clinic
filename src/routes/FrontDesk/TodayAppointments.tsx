@@ -65,29 +65,47 @@ export default function TodayAppointments({ searchTerm, onPatientSelect }: Today
 
   const checkInMutation = useMutation({
     mutationFn: async (patientId: string) => {
-      // Update patient status to arrived
+      // Check if patient has signed intake form
+      const { data: intakeForm } = await supabase
+        .from('intake_forms')
+        .select('id')
+        .eq('patient_id', patientId)
+        .eq('is_active', true)
+        .eq('active_signed', true)
+        .maybeSingle();
+
+      const newStatus = intakeForm ? 'ready' : 'arrived';
+
+      // Update patient status
       const { error: patientError } = await supabase
         .from('patients')
-        .update({ status: 'arrived' })
+        .update({ status: newStatus })
         .eq('id', patientId);
 
       if (patientError) throw patientError;
 
-      // Update appointment status to arrived
+      // Update appointment status
       const { error: appointmentError } = await supabase
         .from('appointments')
-        .update({ status: 'arrived' })
+        .update({ status: newStatus })
         .eq('patient_id', patientId);
 
       if (appointmentError) throw appointmentError;
+
+      return { status: newStatus };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const statusMessage = data.status === 'ready' 
+        ? "Patient moved to ready queue (intake already signed)"
+        : "Patient moved to arrived queue";
+      
       toast({
         title: "Patient checked in",
-        description: "Patient moved to arrived queue",
+        description: statusMessage,
       });
       queryClient.invalidateQueries({ queryKey: ['today-appointments'] });
       queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
     },
     onError: (error) => {
       console.error('Error checking in patient:', error);
@@ -139,11 +157,11 @@ export default function TodayAppointments({ searchTerm, onPatientSelect }: Today
   }
 
   return (
-    <div className="p-2 space-y-2">
+    <div className="flex gap-2 overflow-x-auto pb-2">
       {appointments.map((appointment) => (
         <div
           key={appointment.id}
-          className="bg-background border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+          className="flex-shrink-0 w-64 bg-background border rounded-lg p-3 hover:bg-muted/50 transition-colors"
         >
           {/* Time and Status */}
           <div className="flex items-center justify-between mb-2">
@@ -159,22 +177,20 @@ export default function TodayAppointments({ searchTerm, onPatientSelect }: Today
           </div>
 
           {/* Patient Info */}
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                <h3 className="font-medium text-sm truncate">
-                  {appointment.patients.arabic_full_name}
-                </h3>
-              </div>
-              
-              {appointment.patients.phone && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Phone className="h-3 w-3" />
-                  <span>{appointment.patients.phone}</span>
-                </div>
-              )}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-1">
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
+              <h3 className="font-medium text-sm truncate">
+                {appointment.patients.arabic_full_name}
+              </h3>
             </div>
+            
+            {appointment.patients.phone && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                <span>{appointment.patients.phone}</span>
+              </div>
+            )}
           </div>
 
           {/* Duration */}

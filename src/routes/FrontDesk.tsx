@@ -1,13 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, Search, Calendar, Clock, Stethoscope } from 'lucide-react';
+import { UserPlus, Search, Calendar, Clock, Stethoscope, Activity, CheckCircle } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useIsMobile } from '@/hooks/use-mobile';
 import QuickAddDrawer from './FrontDesk/QuickAddDrawer';
 import ArrivedQueue from './FrontDesk/ArrivedQueue';
 import ReadyQueue from './FrontDesk/ReadyQueue';
 import TodayAppointments from './FrontDesk/TodayAppointments';
+import InChairQueue from './FrontDesk/InChairQueue';
+import CompletedQueue from './FrontDesk/CompletedQueue';
 import GlobalPatientSlideOver from './FrontDesk/GlobalPatientSlideOver';
 import QuickSwitcher from './FrontDesk/QuickSwitcher';
 import { useToast } from '@/hooks/use-toast';
@@ -114,62 +116,99 @@ export default function FrontDesk() {
             </div>
           </div>
         ) : (
-          // Desktop: Three columns
-          <div className="grid grid-cols-3 gap-4 h-full p-4">
-            {/* Left: Arrived but Unsigned */}
-            <div className="bg-card rounded-lg border h-full overflow-hidden">
-              <div className="border-b p-4">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-yellow-500" />
-                  <h2 className="font-semibold">Arrived & Unsigned</h2>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Waiting for intake forms
-                </p>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <ArrivedQueue 
-                  searchTerm={debouncedSearchTerm}
-                  onPatientSelect={handlePatientSelect}
-                />
-              </div>
-            </div>
-
-            {/* Middle: Ready Queue */}
-            <div className="bg-card rounded-lg border h-full overflow-hidden">
-              <div className="border-b p-4">
-                <div className="flex items-center gap-2">
-                  <Stethoscope className="h-4 w-4 text-blue-500" />
-                  <h2 className="font-semibold">Ready Queue</h2>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Intake complete • Ready for visit
-                </p>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <ReadyQueue 
-                  searchTerm={debouncedSearchTerm}
-                  onPatientSelect={handlePatientSelect}
-                />
-              </div>
-            </div>
-
-            {/* Right: Today's Appointments */}
-            <div className="bg-card rounded-lg border h-full overflow-hidden">
-              <div className="border-b p-4">
+          <div className="flex flex-col h-full">
+            {/* Top Row: Today's Appointments (Horizontal) */}
+            <div className="bg-card rounded-lg border mb-4 mx-4 mt-4">
+              <div className="border-b p-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-green-500" />
-                  <h2 className="font-semibold">Today's Appointments</h2>
+                  <h2 className="font-semibold text-sm">Today's Appointments</h2>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Scheduled visits
-                </p>
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="p-2">
                 <TodayAppointments 
                   searchTerm={debouncedSearchTerm}
                   onPatientSelect={handlePatientSelect}
                 />
+              </div>
+            </div>
+
+            {/* Bottom Row: 4 Columns */}
+            <div className="grid grid-cols-4 gap-4 flex-1 px-4 pb-4 overflow-hidden">
+              {/* Column 1: Arrived & Unsigned */}
+              <div className="bg-card rounded-lg border h-full overflow-hidden">
+                <div className="border-b p-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-yellow-500" />
+                    <h2 className="font-semibold text-sm">Arrived & Unsigned</h2>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Waiting for intake forms
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <ArrivedQueue 
+                    searchTerm={debouncedSearchTerm}
+                    onPatientSelect={handlePatientSelect}
+                  />
+                </div>
+              </div>
+
+              {/* Column 2: Ready Queue */}
+              <div className="bg-card rounded-lg border h-full overflow-hidden">
+                <div className="border-b p-3">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-blue-500" />
+                    <h2 className="font-semibold text-sm">Ready Queue</h2>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Intake complete • Ready for visit
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <ReadyQueue 
+                    searchTerm={debouncedSearchTerm}
+                    onPatientSelect={handlePatientSelect}
+                  />
+                </div>
+              </div>
+
+              {/* Column 3: In-Chair */}
+              <div className="bg-card rounded-lg border h-full overflow-hidden">
+                <div className="border-b p-3">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-purple-500" />
+                    <h2 className="font-semibold text-sm">In-Chair</h2>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Currently with provider
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <InChairQueue 
+                    searchTerm={debouncedSearchTerm}
+                    onPatientSelect={handlePatientSelect}
+                  />
+                </div>
+              </div>
+
+              {/* Column 4: Completed */}
+              <div className="bg-card rounded-lg border h-full overflow-hidden">
+                <div className="border-b p-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    <h2 className="font-semibold text-sm">Completed</h2>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ready for checkout
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  <CompletedQueue 
+                    searchTerm={debouncedSearchTerm}
+                    onPatientSelect={handlePatientSelect}
+                  />
+                </div>
               </div>
             </div>
           </div>

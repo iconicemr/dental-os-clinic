@@ -2,16 +2,132 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Stethoscope, User, Phone, Clock, Play } from 'lucide-react';
+import { Stethoscope, User, Phone, Clock, Play, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useAppStore } from '@/store/appStore';
 import { useState } from 'react';
+import React from 'react';
 
 interface ReadyQueueProps {
   searchTerm: string;
   onPatientSelect: (patientId: string) => void;
+}
+
+interface SortablePatientProps {
+  patient: any;
+  index: number;
+  onPatientSelect: (patientId: string) => void;
+  onStartVisit: (patientId: string) => void;
+  isStarting: boolean;
+}
+
+function SortablePatient({ patient, index, onPatientSelect, onStartVisit, isStarting }: SortablePatientProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: patient.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-background border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+    >
+      {/* Queue Position with Drag Handle */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <Badge variant="outline" className="text-xs">
+            #{index + 1} in queue
+          </Badge>
+        </div>
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+          Ready
+        </Badge>
+      </div>
+
+      {/* Patient Info */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+            <h3 className="font-medium text-sm truncate">
+              {patient.arabic_full_name}
+            </h3>
+          </div>
+          
+          {patient.phone && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Phone className="h-3 w-3" />
+              <span>{patient.phone}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Wait Time */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+        <Clock className="h-3 w-3" />
+        <span>Ready for {formatDistanceToNow(new Date(patient.updated_at))}</span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => onStartVisit(patient.id)}
+          disabled={isStarting}
+          className="flex-1 text-xs bg-green-600 hover:bg-green-700"
+        >
+          <Play className="mr-1 h-3 w-3" />
+          Start Visit
+        </Button>
+        
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onPatientSelect(patient.id)}
+          className="text-xs"
+        >
+          <User className="mr-1 h-3 w-3" />
+          View
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueueProps) {
@@ -20,8 +136,16 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
   const { profile, currentClinic } = useAppStore();
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [selectedRoom, setSelectedRoom] = useState<string>('');
+  const [patients, setPatients] = useState<any[]>([]);
 
-  const { data: patients = [], isLoading } = useQuery({
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const { data: fetchedPatients = [], isLoading } = useQuery({
     queryKey: ['ready-queue', searchTerm],
     queryFn: async () => {
       let query = supabase
@@ -39,6 +163,11 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
       return data || [];
     },
   });
+
+  // Update local state when data changes
+  React.useEffect(() => {
+    setPatients(fetchedPatients);
+  }, [fetchedPatients]);
 
   const { data: providers = [] } = useQuery({
     queryKey: ['providers'],
@@ -136,6 +265,22 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     });
   };
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = patients.findIndex(patient => patient.id === active.id);
+      const newIndex = patients.findIndex(patient => patient.id === over.id);
+
+      setPatients(arrayMove(patients, oldIndex, newIndex));
+      
+      toast({
+        title: "Queue updated",
+        description: "Patient order has been changed",
+      });
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-3">
@@ -194,72 +339,31 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
         </div>
       </div>
 
-      {/* Queue */}
-      <div className="p-2 space-y-2">
-        {patients.map((patient, index) => (
-          <div
-            key={patient.id}
-            className="bg-background border rounded-lg p-3 hover:bg-muted/50 transition-colors"
+      {/* Draggable Queue */}
+      <div className="p-2">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={patients.map(p => p.id)}
+            strategy={verticalListSortingStrategy}
           >
-            {/* Queue Position */}
-            <div className="flex items-center justify-between mb-2">
-              <Badge variant="outline" className="text-xs">
-                #{index + 1} in queue
-              </Badge>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Ready
-              </Badge>
+            <div className="space-y-2">
+              {patients.map((patient, index) => (
+                <SortablePatient
+                  key={patient.id}
+                  patient={patient}
+                  index={index}
+                  onPatientSelect={onPatientSelect}
+                  onStartVisit={handleStartVisit}
+                  isStarting={startVisitMutation.isPending}
+                />
+              ))}
             </div>
-
-            {/* Patient Info */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <h3 className="font-medium text-sm truncate">
-                    {patient.arabic_full_name}
-                  </h3>
-                </div>
-                
-                {patient.phone && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3" />
-                    <span>{patient.phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Wait Time */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-              <Clock className="h-3 w-3" />
-              <span>Ready for {formatDistanceToNow(new Date(patient.updated_at))}</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleStartVisit(patient.id)}
-                disabled={startVisitMutation.isPending}
-                className="flex-1 text-xs bg-green-600 hover:bg-green-700"
-              >
-                <Play className="mr-1 h-3 w-3" />
-                Start Visit
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onPatientSelect(patient.id)}
-                className="text-xs"
-              >
-                <User className="mr-1 h-3 w-3" />
-                View
-              </Button>
-            </div>
-          </div>
-        ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

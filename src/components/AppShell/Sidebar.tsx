@@ -27,7 +27,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'patients', to: '/front-desk', label: 'Front Desk', icon: Users },
   { id: 'patients', to: '/patients', label: 'Patients', icon: Users },
   { id: 'intake', to: '/intake', label: 'Intake', icon: ClipboardList },
-  { id: 'waiting', to: '/waiting-room', label: 'Waiting Room', icon: Clock },
   { id: 'calendar', to: '/calendar', label: 'Calendar', icon: Calendar },
   { id: 'clinical', to: '/clinical', label: 'Clinical', icon: Stethoscope },
   { id: 'billing', to: '/billing', label: 'Billing', icon: CreditCard },

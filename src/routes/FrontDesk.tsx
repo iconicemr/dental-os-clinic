@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { UserPlus, Search, Calendar, Clock, Stethoscope, Activity, CheckCircle } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFrontDeskRealtime } from '@/hooks/useFrontDeskRealtime';
 import QuickAddDrawer from './FrontDesk/QuickAddDrawer';
 import ArrivedQueue from './FrontDesk/ArrivedQueue';
 import ReadyQueue from './FrontDesk/ReadyQueue';
@@ -17,6 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 export default function FrontDesk() {
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  
+  // Enable real-time updates for all front desk components
+  useFrontDeskRealtime();
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');

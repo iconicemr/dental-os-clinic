@@ -16,15 +16,13 @@ interface PatientSearchStepProps {
 
 export default function PatientSearchStep({ onSearchResults, onSelectExisting }: PatientSearchStepProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [hasSearched, setHasSearched] = useState(false);
   
   const { data: searchResults = [], isLoading } = useSearchPatients(searchTerm);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
-    
-    setHasSearched(true);
+    // Keep for manual submit, but results update live
     onSearchResults(searchResults, searchTerm);
   };
 
@@ -73,6 +71,7 @@ export default function PatientSearchStep({ onSearchResults, onSelectExisting }:
               autoFocus
             />
           </div>
+          {/* Search button optional; results update live */}
           <Button 
             type="submit" 
             className="w-full" 
@@ -82,65 +81,65 @@ export default function PatientSearchStep({ onSearchResults, onSelectExisting }:
           </Button>
         </form>
 
-        {hasSearched && (
-          <div className="space-y-3">
-            {searchResults.length > 0 ? (
-              <>
-                <h3 className="font-medium text-sm">Found {searchResults.length} patients:</h3>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {searchResults.map((patient) => (
-                    <Card key={patient.id} className="cursor-pointer hover:bg-muted/50 transition-colors">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="font-medium text-sm" dir="rtl">
-                              {patient.arabic_full_name}
+        <div className="space-y-3">
+          {searchResults.length > 0 ? (
+            <>
+              <h3 className="font-medium text-sm">
+                {searchTerm.trim() ? `Found ${searchResults.length} patients:` : 'Latest patients'}
+              </h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {searchResults.map((patient) => (
+                  <Card key={patient.id} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm" dir="rtl">
+                            {patient.arabic_full_name}
+                          </div>
+                          {patient.phone && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                              <Phone className="h-3 w-3" />
+                              {patient.phone}
                             </div>
-                            {patient.phone && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                <Phone className="h-3 w-3" />
-                                {patient.phone}
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge className={getStatusColor(patient.status)}>
-                                {getStatusLabel(patient.status)}
-                              </Badge>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                {format(new Date(patient.created_at), 'MMM d, yyyy')}
-                              </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className={getStatusColor(patient.status)}>
+                              {getStatusLabel(patient.status)}
+                            </Badge>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(patient.created_at), 'MMM d, yyyy')}
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
-                            onClick={() => onSelectExisting(patient)}
-                          >
-                            Select
-                          </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8 space-y-3">
-                <UserPlus className="h-12 w-12 text-muted-foreground mx-auto" />
-                <div>
-                  <h3 className="font-medium">No patients found</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Create a new patient with the search term
-                  </p>
-                </div>
-                <Button className="w-full">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Create New Patient
-                </Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => onSelectExisting(patient)}
+                        >
+                          Select
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            </>
+          ) : (
+            <div className="text-center py-8 space-y-3">
+              <UserPlus className="h-12 w-12 text-muted-foreground mx-auto" />
+              <div>
+                <h3 className="font-medium">No patients found</h3>
+                <p className="text-sm text-muted-foreground">
+                  Create a new patient with the search term
+                </p>
+              </div>
+              <Button className="w-full" onClick={() => onSearchResults([], searchTerm)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create New Patient
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

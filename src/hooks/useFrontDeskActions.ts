@@ -5,32 +5,30 @@ import { addMinutes, startOfDay, endOfDay } from 'date-fns';
 
 // Search patients hook
 export function useSearchPatients(term: string) {
-  const { currentClinic } = useAppStore();
-  
   return useQuery({
     queryKey: ['fd.search', term],
     queryFn: async () => {
-      if (!term.trim()) return [];
-      
+      const trimmed = term.trim();
+      const normalizedDigits = normalizeArabicDigits(trimmed).replace(/\D/g, '');
+
       let query = supabase
         .from('patients')
         .select('id, arabic_full_name, phone, status, created_at')
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (currentClinic?.id) {
-        query = query.eq('clinic_id', currentClinic.id);
+      if (trimmed.length > 0) {
+        // Search by Arabic name OR phone (support Arabic-Indic digits)
+        const phoneTerm = normalizedDigits.length > 0 ? normalizedDigits : trimmed;
+        query = query.or(`arabic_full_name.ilike.%${trimmed}%,phone.ilike.%${phoneTerm}%`);
       }
-
-      // Search in both Arabic name and phone
-      query = query.or(`arabic_full_name.ilike.%${term}%,phone.ilike.%${term}%`);
 
       const { data, error } = await query;
       if (error) throw error;
-      
       return data || [];
     },
-    enabled: term.trim().length > 0,
+    // Always enabled: show latest patients by default, live update as user types
+    enabled: true,
   });
 }
 
@@ -48,10 +46,13 @@ export function useCreatePatient() {
       profession?: string;
       address?: string;
     }) => {
+      const normalizedPhone = patientData.phone ? normalizeArabicDigits(patientData.phone) : undefined;
+
       const { data, error } = await supabase
         .from('patients')
         .insert({
           ...patientData,
+          phone: normalizedPhone,
           status: 'planned',
           clinic_id: currentClinic?.id || null,
           created_by: profile?.user_id || null,
@@ -202,8 +203,21 @@ export function usePatientSummary(patientId: string | null) {
   });
 }
 
+// Digits normalization (Arabic-Indic to Latin)
+export function normalizeArabicDigits(input: string): string {
+  if (!input) return '';
+  const arabicZero = '٠'.charCodeAt(0);
+  const arabicIndicZero = '۰'.charCodeAt(0);
+  return input.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (d) => {
+    const code = d.charCodeAt(0);
+    const offset = code >= arabicIndicZero ? code - arabicIndicZero : code - arabicZero;
+    return String.fromCharCode('0'.charCodeAt(0) + offset);
+  });
+}
+
 // Utility function to detect if a string looks like a phone number
 export function looksLikePhone(term: string): boolean {
-  const digitsOnly = term.replace(/\D/g, '');
+  const normalized = normalizeArabicDigits(term);
+  const digitsOnly = normalized.replace(/\D/g, '');
   return digitsOnly.length >= 8;
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import PatientSearchStep from './PatientSearchStep';
 import CreatePatientStep from './CreatePatientStep';
@@ -32,13 +33,11 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
   const [currentStep, setCurrentStep] = useState<AddPatientStep>('search');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<SearchResult | CreatedPatient | null>(null);
-  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleClose = () => {
     setCurrentStep('search');
     setSearchTerm('');
     setSelectedPatient(null);
-    setCalendarOpen(false);
     onClose();
   };
 
@@ -69,11 +68,19 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
   };
 
   const handleAppointment = () => {
-    setCalendarOpen(true);
-  };
-
-  const handleAppointmentCreated = () => {
-    setCalendarOpen(false);
+    // Navigate to calendar page for scheduling
+    try {
+      // Lazy import to avoid extra dependency in this file
+      const { useNavigate } = require('react-router-dom');
+      const navigate = useNavigate();
+      if (selectedPatient) {
+        navigate(`/calendar?patientId=${selectedPatient.id}`);
+      } else if (searchTerm) {
+        navigate('/calendar');
+      }
+    } catch (e) {
+      // Fallback: just close
+    }
     handleClose();
     onComplete();
   };
@@ -124,18 +131,11 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
 
   return (
     <>
-      <Dialog open={isOpen && !calendarOpen} onOpenChange={handleClose}>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent className="max-w-md">
           {renderStep()}
         </DialogContent>
       </Dialog>
-
-      <CalendarPickerModal
-        isOpen={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-        patient={selectedPatient}
-        onAppointmentCreated={handleAppointmentCreated}
-      />
     </>
   );
 }

@@ -59,7 +59,7 @@ export default function ActionPickerStep({ patient, onWalkIn, onAppointment, onC
           </Alert>
         )}
 
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Walk-in Option */}
           <Card className={`cursor-pointer transition-colors ${isPatientAlreadyHere ? 'opacity-50' : 'hover:bg-muted/50'}`}>
             <CardContent className="p-4">

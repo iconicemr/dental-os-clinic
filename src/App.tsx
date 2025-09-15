@@ -9,7 +9,6 @@ import AppShell from "@/components/AppShell/AppShell";
 
 // Route components
 import Login from "@/routes/auth/Login";
-import Dashboard from "@/routes/Dashboard";
 import Setup from "@/routes/Setup";
 import FrontDesk from "@/routes/FrontDesk";
 import Patients from "@/routes/Patients";
@@ -25,6 +24,26 @@ import Admin from "@/routes/Admin";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMe } from "@/hooks/useMe";
+
+function LandingRedirect() {
+  const { profile, isLoading } = useMe();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isLoading) return;
+    const role = profile?.role;
+    if (role === 'admin') navigate('/admin', { replace: true });
+    else if (role === 'intake') navigate('/intake', { replace: true });
+    else if (role === 'doctor') navigate('/clinical', { replace: true });
+    else navigate('/front-desk', { replace: true });
+  }, [profile, isLoading, navigate]);
+
+  return <div className="p-6 text-muted-foreground">Redirecting...</div>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -39,7 +58,7 @@ const App = () => (
           <Route path="/" element={
             <ProtectedRoute>
               <AppShell>
-                <Dashboard />
+                <LandingRedirect />
               </AppShell>
             </ProtectedRoute>
           } />

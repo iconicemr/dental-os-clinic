@@ -25,6 +25,7 @@ export function useFrontDeskRealtime() {
           queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
           queryClient.invalidateQueries({ queryKey: ['in-chair-queue'] });
           queryClient.invalidateQueries({ queryKey: ['completed-queue'] });
+          queryClient.invalidateQueries({ queryKey: ['intake-patients'] });
         }
       )
       .subscribe();
@@ -85,9 +86,42 @@ export function useFrontDeskRealtime() {
           // Invalidate queues that depend on intake form status
           queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
           queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
+          queryClient.invalidateQueries({ queryKey: ['intake-patients'] });
         }
       )
       .subscribe();
+
+    // Auto no-show after 1 hour
+    const checkNoShows = async () => {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      try {
+        const { data: latePatients } = await supabase
+          .from('patients')
+          .select('id, updated_at')
+          .eq('status', 'planned')
+          .lte('updated_at', oneHourAgo.toISOString());
+        
+        if (latePatients && latePatients.length > 0) {
+          const patientIds = latePatients.map(p => p.id);
+          
+          await supabase
+            .from('patients')
+            .update({ status: 'no_show' })
+            .in('id', patientIds);
+          
+          await supabase
+            .from('appointments')
+            .update({ status: 'no_show' })
+            .in('patient_id', patientIds);
+        }
+      } catch (error) {
+        console.error('Error checking for no-shows:', error);
+      }
+    };
+
+    // Check for no-shows every 5 minutes
+    const noShowInterval = setInterval(checkNoShows, 5 * 60 * 1000);
 
     // Cleanup function
     return () => {
@@ -95,6 +129,7 @@ export function useFrontDeskRealtime() {
       supabase.removeChannel(appointmentsChannel);
       supabase.removeChannel(visitsChannel);
       supabase.removeChannel(intakeFormsChannel);
+      clearInterval(noShowInterval);
     };
   }, [queryClient]);
 }

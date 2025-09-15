@@ -67,24 +67,8 @@ export default function Header() {
           {clinics.length > 1 && <ClinicSelector />}
         </div>
 
-        {/* Right section with status and user menu */}
+        {/* Right section with user menu */}
         <div className="flex items-center space-x-4">
-          {/* Status indicators */}
-          <div className="flex items-center space-x-2">
-            <Badge 
-              variant="outline"
-              className="text-xs"
-            >
-              <Wifi className="h-3 w-3 mr-1" />
-              Online
-            </Badge>
-            
-            <Badge variant="outline" className="text-xs">
-              <Database className="h-3 w-3 mr-1" />
-              DB OK
-            </Badge>
-          </div>
-
           {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

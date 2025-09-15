@@ -23,7 +23,6 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard', to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'patients', to: '/front-desk', label: 'Front Desk', icon: Users },
   { id: 'patients', to: '/patients', label: 'Patients', icon: Users },
   { id: 'intake', to: '/intake', label: 'Intake', icon: ClipboardList },

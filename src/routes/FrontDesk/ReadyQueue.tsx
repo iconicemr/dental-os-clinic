@@ -166,7 +166,9 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
 
   // Update local state when data changes
   React.useEffect(() => {
-    setPatients(fetchedPatients);
+    if (JSON.stringify(fetchedPatients) !== JSON.stringify(patients)) {
+      setPatients(fetchedPatients);
+    }
   }, [fetchedPatients]);
 
   const { data: providers = [] } = useQuery({

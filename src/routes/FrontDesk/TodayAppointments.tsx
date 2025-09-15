@@ -51,6 +51,7 @@ export default function TodayAppointments({ searchTerm, onPatientSelect }: Today
         `)
         .gte('starts_at', startOfDay.toISOString())
         .lte('starts_at', endOfDay.toISOString())
+        .eq('status', 'planned')
         .order('starts_at', { ascending: true });
 
       if (searchTerm) {

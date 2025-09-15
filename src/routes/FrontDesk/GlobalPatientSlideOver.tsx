@@ -332,17 +332,13 @@ export default function GlobalPatientSlideOver({
         </ScrollArea>
 
         {/* Actions */}
-        <div className="mt-6 space-y-2">
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button size="sm" variant="outline" className="flex-1">
+        <div className="pt-4 border-t space-y-2">
+          {patient.status === 'completed' && (
+            <Button size="sm" className="w-full">
               <Receipt className="mr-2 h-4 w-4" />
               Checkout
             </Button>
-          </div>
+          )}
 
           {/* Status Actions */}
           <div className="grid grid-cols-2 gap-2">

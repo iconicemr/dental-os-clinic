@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import PatientSearchStep from './PatientSearchStep';
 import CreatePatientStep from './CreatePatientStep';
 import ExistingPatientStep from './ExistingPatientStep';
@@ -131,11 +131,20 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
 
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-md">
-          {renderStep()}
-        </DialogContent>
-      </Dialog>
+      <Sheet open={isOpen} onOpenChange={handleClose}>
+        <SheetContent side="right" className="w-[520px] sm:w-[560px] p-0">
+          <div className="h-full flex flex-col">
+            <div className="border-b bg-card/50 p-4 sticky top-0 z-10">
+              <SheetHeader>
+                <SheetTitle>Add Patient</SheetTitle>
+              </SheetHeader>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {renderStep()}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

@@ -13,9 +13,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
-  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+  if (!supabaseUrl) {
+    return new Response(JSON.stringify({ error: "SUPABASE_URL not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+  if (!serviceRoleKey) {
+    return new Response(JSON.stringify({ error: "SUPABASE_SERVICE_ROLE_KEY not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+  if (!anonKey) {
+    return new Response(JSON.stringify({ error: "SUPABASE_PUBLISHABLE_KEY not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
 
   try {
     const { staff_code, full_name, role, temp_password, phone } = await req.json();
@@ -36,7 +55,7 @@ serve(async (req) => {
     }
 
     // Client scoped to the caller to read their user and role
-    const callerClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
     });
 
@@ -48,10 +67,10 @@ serve(async (req) => {
       );
     }
 
-    const serviceClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify the caller is admin
-    const { data: callerProfile, error: profileErr } = await serviceClient
+    const { data: callerProfile, error: profileErr } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("user_id", authUserData.user.id)
@@ -66,7 +85,7 @@ serve(async (req) => {
 
     const email = `${staff_code}@iconic.local`;
 
-    const { data: created, error: createErr } = await serviceClient.auth.admin.createUser({
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: temp_password,
       email_confirm: true,
@@ -82,7 +101,7 @@ serve(async (req) => {
 
     const newUserId = created.user.id;
 
-    const { data: profile, error: insertErr } = await serviceClient
+    const { data: profile, error: insertErr } = await supabaseAdmin
       .from("profiles")
       .insert({
         user_id: newUserId,

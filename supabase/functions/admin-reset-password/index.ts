@@ -12,8 +12,21 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl) {
+    return new Response(JSON.stringify({ error: "SUPABASE_URL not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!serviceRoleKey) {
+    return new Response(JSON.stringify({ error: "SUPABASE_SERVICE_ROLE_KEY not set" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const { user_id, temp_password } = await req.json();
@@ -26,11 +39,11 @@ serve(async (req) => {
     }
 
     // Use a single service client; auth.getUser uses caller's Authorization header
-    const serviceClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
     });
 
-    const { data: authUserData, error: authUserErr } = await serviceClient.auth.getUser();
+    const { data: authUserData, error: authUserErr } = await supabaseAdmin.auth.getUser();
     if (authUserErr || !authUserData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -39,7 +52,7 @@ serve(async (req) => {
     }
 
     // Ensure caller is admin
-    const { data: callerProfile, error: profileErr } = await serviceClient
+    const { data: callerProfile, error: profileErr } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("user_id", authUserData.user.id)
@@ -52,7 +65,7 @@ serve(async (req) => {
       });
     }
 
-    const { data: updated, error: updateErr } = await serviceClient.auth.admin.updateUserById(user_id, {
+    const { data: updated, error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
       password: temp_password,
       email_confirm: true,
     });
@@ -66,7 +79,7 @@ serve(async (req) => {
     }
 
     // Mark profile to force password change on next login
-    const { error: profileUpdateErr } = await serviceClient
+    const { error: profileUpdateErr } = await supabaseAdmin
       .from("profiles")
       .update({ must_change_password: true, last_password_reset_at: new Date().toISOString() })
       .eq("user_id", user_id);

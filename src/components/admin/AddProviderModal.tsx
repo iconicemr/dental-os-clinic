@@ -43,7 +43,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
       await createProvider.mutateAsync({
         display_name: data.display_name,
         specialty: data.specialty || undefined,
-        user_id: data.user_id || undefined,
+        user_id: data.user_id === "NONE" ? undefined : data.user_id,
         active: true,
       });
       form.reset();
@@ -74,7 +74,7 @@ export function AddProviderModal({ open, onOpenChange }: AddProviderModalProps) 
                         <SelectValue placeholder="Select doctor to link" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No staff link</SelectItem>
+                        <SelectItem value="NONE">No staff link</SelectItem>
                         {doctorStaff.map((doctor) => (
                           <SelectItem key={doctor.user_id} value={doctor.user_id}>
                             {doctor.full_name} ({doctor.staff_code})

@@ -44,7 +44,7 @@ export function EditProviderModal({ open, onOpenChange, provider }: EditProvider
       form.reset({
         display_name: provider.display_name || '',
         specialty: provider.specialty || '',
-        user_id: provider.user_id || '',
+        user_id: provider.user_id || 'NONE',
       });
     }
   }, [provider, form]);
@@ -57,7 +57,7 @@ export function EditProviderModal({ open, onOpenChange, provider }: EditProvider
         id: provider.id,
         display_name: data.display_name,
         specialty: data.specialty || undefined,
-        user_id: data.user_id || undefined,
+        user_id: data.user_id === "NONE" ? undefined : data.user_id,
       });
       onOpenChange(false);
     } catch (error) {
@@ -89,7 +89,7 @@ export function EditProviderModal({ open, onOpenChange, provider }: EditProvider
                         <SelectValue placeholder="Select doctor to link" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No staff link</SelectItem>
+                        <SelectItem value="NONE">No staff link</SelectItem>
                         {doctorStaff.map((doctor) => (
                           <SelectItem key={doctor.user_id} value={doctor.user_id}>
                             {doctor.full_name} ({doctor.staff_code})

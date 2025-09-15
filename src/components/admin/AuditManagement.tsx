@@ -17,7 +17,12 @@ export function AuditManagement() {
   const [tableFilter, setTableFilter] = useState('');
   const [userFilter, setUserFilter] = useState('');
   
-  const { data: auditLog, isLoading } = useAuditLog(dateFrom, dateTo, tableFilter, userFilter);
+  const { data: auditLog, isLoading } = useAuditLog(
+    dateFrom, 
+    dateTo, 
+    tableFilter === "ALL" ? "" : tableFilter, 
+    userFilter
+  );
 
   const getOperationBadgeVariant = (operation: string) => {
     switch (operation.toLowerCase()) {
@@ -130,7 +135,7 @@ export function AuditManagement() {
                   <SelectValue placeholder="All tables" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All tables</SelectItem>
+                  <SelectItem value="ALL">All tables</SelectItem>
                   <SelectItem value="patients">patients</SelectItem>
                   <SelectItem value="appointments">appointments</SelectItem>
                   <SelectItem value="visits">visits</SelectItem>

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Sheet,
   SheetContent,
@@ -44,7 +44,6 @@ export default function GlobalPatientSlideOver({
   onClose 
 }: GlobalPatientSlideOverProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: patient, isLoading } = useQuery({
     queryKey: ['patient', patientId],

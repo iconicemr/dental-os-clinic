@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
   const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   try {
@@ -26,20 +25,18 @@ serve(async (req) => {
       });
     }
 
-    // Caller client (for auth user)
-    const callerClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    // Use a single service client; auth.getUser uses caller's Authorization header
+    const serviceClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
     });
 
-    const { data: authUserData, error: authUserErr } = await callerClient.auth.getUser();
+    const { data: authUserData, error: authUserErr } = await serviceClient.auth.getUser();
     if (authUserErr || !authUserData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const serviceClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Ensure caller is admin
     const { data: callerProfile, error: profileErr } = await serviceClient

@@ -31,8 +31,8 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
   });
 
   const handleOpenIntake = (patientId: string) => {
-    // Open intake form in new tab
-    window.open(`/intake/form?patient=${patientId}`, '_blank');
+    // Navigate to intake form
+    window.location.href = `/intake/form?patient=${patientId}`;
   };
 
   if (isLoading) {

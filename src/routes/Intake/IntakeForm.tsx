@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { PenTool, Save, X, ArrowLeft } from 'lucide-react';
+import { Save, X, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -19,7 +19,11 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 const intakeFormSchema = z.object({
   // Demographics
   gender: z.enum(['ذكر', 'أنثى']).optional(),
-  age: z.number().min(1).max(120).optional(),
+  dob: z.string().optional().refine((val) => {
+    if (!val) return true;
+    const date = new Date(val);
+    return date <= new Date();
+  }, 'Date of birth cannot be in the future'),
   profession: z.string().max(100).optional(),
   address: z.string().max(500).optional(),
   phone: z.string().optional(),
@@ -74,7 +78,6 @@ export default function IntakeForm() {
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patient');
   const [patient, setPatient] = useState<any>(null);
-  const [isSignaturePadOpen, setIsSignaturePadOpen] = useState(false);
   const [signatureData, setSignatureData] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -131,6 +134,8 @@ export default function IntakeForm() {
     if (data.phone) setValue('phone', data.phone);
     if (data.profession) setValue('profession', data.profession);
     if (data.address) setValue('address', data.address);
+    if (data.dob) setValue('dob', data.dob);
+    if (data.gender) setValue('gender', data.gender as 'ذكر' | 'أنثى');
     if (data.allergies) {
       setValue('hasAllergies', true);
       setValue('allergies', data.allergies);
@@ -244,6 +249,8 @@ export default function IntakeForm() {
       const { error: patientError } = await supabase
         .from('patients')
         .update({
+          dob: data.dob || null,
+          gender: data.gender || null,
           profession: data.profession,
           address: data.address,
           phone: data.phone,
@@ -350,17 +357,15 @@ export default function IntakeForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="age">العمر</Label>
+                  <Label htmlFor="dob">تاريخ الميلاد</Label>
                   <Input
-                    id="age"
-                    type="number"
-                    min="1"
-                    max="120"
-                    {...register('age', { valueAsNumber: true })}
+                    id="dob"
+                    type="date"
+                    {...register('dob')}
                     className="text-right"
                   />
-                  {errors.age && (
-                    <p className="text-sm text-destructive">{errors.age.message}</p>
+                  {errors.dob && (
+                    <p className="text-sm text-destructive">{errors.dob.message}</p>
                   )}
                 </div>
 
@@ -585,48 +590,35 @@ export default function IntakeForm() {
               </p>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>التوقيع *</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsSignaturePadOpen(!isSignaturePadOpen)}
-                  >
-                    <PenTool className="h-4 w-4 ml-2" />
-                    {isSignaturePadOpen ? 'إخفاء منطقة التوقيع' : 'إظهار منطقة التوقيع'}
-                  </Button>
-                </div>
-
-                {isSignaturePadOpen && (
-                  <div className="border-2 border-dashed border-muted-foreground rounded-lg p-4">
-                    <canvas
-                      ref={canvasRef}
-                      width={600}
-                      height={200}
-                      className="border rounded w-full touch-none"
-                      style={{ maxWidth: '100%', height: 'auto' }}
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
-                      onTouchStart={startDrawing}
-                      onTouchMove={draw}
-                      onTouchEnd={stopDrawing}
-                    />
-                    <div className="flex justify-between items-center mt-2">
-                      <p className="text-sm text-muted-foreground">استخدم إصبعك أو القلم للتوقيع في المربع أعلاه</p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearSignature}
-                      >
-                        مسح التوقيع
-                      </Button>
-                    </div>
+                <Label>التوقيع *</Label>
+                
+                <div className="border-2 border-dashed border-muted-foreground rounded-lg p-4">
+                  <canvas
+                    ref={canvasRef}
+                    width={600}
+                    height={200}
+                    className="border rounded w-full touch-none"
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-sm text-muted-foreground">استخدم إصبعك أو القلم للتوقيع في المربع أعلاه</p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearSignature}
+                    >
+                      مسح التوقيع
+                    </Button>
                   </div>
-                )}
+                </div>
 
                 {signatureData && (
                   <div className="space-y-2">

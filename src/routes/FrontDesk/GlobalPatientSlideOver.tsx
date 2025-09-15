@@ -30,6 +30,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { format, isValid } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useUpdatePatientStatusMutation } from '../Patients/usePatientsQuery';
 
 interface GlobalPatientSlideOverProps {
   patientId: string | null;
@@ -80,35 +81,7 @@ export default function GlobalPatientSlideOver({
     enabled: !!patientId,
   });
 
-  const statusUpdateMutation = useMutation({
-    mutationFn: async ({ status }: { status: 'planned' | 'arrived' | 'ready' | 'in_chair' | 'completed' | 'no_show' | 'cancelled' | 'discharged' }) => {
-      if (!patientId) throw new Error('No patient ID');
-      
-      const { error } = await supabase
-        .from('patients')
-        .update({ status })
-        .eq('id', patientId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Status updated",
-        description: "Patient status has been updated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['patient', patientId] });
-      queryClient.invalidateQueries({ queryKey: ['arrived-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
-    },
-    onError: (error) => {
-      console.error('Error updating status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update patient status",
-        variant: "destructive",
-      });
-    },
-  });
+  const statusUpdateMutation = useUpdatePatientStatusMutation();
 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
@@ -345,7 +318,7 @@ export default function GlobalPatientSlideOver({
             {patient.status === 'planned' && (
               <Button
                 size="sm"
-                onClick={() => statusUpdateMutation.mutate({ status: 'arrived' })}
+                onClick={() => patientId && statusUpdateMutation.mutate({ patientId, status: 'arrived' })}
                 disabled={statusUpdateMutation.isPending}
               >
                 <UserCheck className="mr-1 h-3 w-3" />
@@ -356,7 +329,7 @@ export default function GlobalPatientSlideOver({
             {patient.status === 'ready' && (
               <Button
                 size="sm"
-                onClick={() => statusUpdateMutation.mutate({ status: 'in_chair' })}
+                onClick={() => patientId && statusUpdateMutation.mutate({ patientId, status: 'in_chair' })}
                 disabled={statusUpdateMutation.isPending}
               >
                 <Play className="mr-1 h-3 w-3" />
@@ -367,7 +340,7 @@ export default function GlobalPatientSlideOver({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => statusUpdateMutation.mutate({ status: 'no_show' })}
+              onClick={() => patientId && statusUpdateMutation.mutate({ patientId, status: 'no_show' })}
               disabled={statusUpdateMutation.isPending}
             >
               <XCircle className="mr-1 h-3 w-3" />
@@ -377,7 +350,7 @@ export default function GlobalPatientSlideOver({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => statusUpdateMutation.mutate({ status: 'cancelled' })}
+              onClick={() => patientId && statusUpdateMutation.mutate({ patientId, status: 'cancelled' })}
               disabled={statusUpdateMutation.isPending}
             >
               <XCircle className="mr-1 h-3 w-3" />

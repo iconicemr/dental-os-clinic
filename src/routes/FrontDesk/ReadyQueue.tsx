@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Stethoscope, User, Phone, Clock, Play, GripVertical } from 'lucide-react';
+import { Stethoscope, User, Phone, Clock, Play, GripVertical, MapPin } from 'lucide-react';
 import {
   DndContext,
   closestCenter,

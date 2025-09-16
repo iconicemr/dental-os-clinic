@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Clock, Phone, User, Stethoscope, MapPin } from 'lucide-react';

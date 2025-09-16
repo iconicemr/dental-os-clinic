@@ -328,10 +328,10 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = patients.findIndex(patient => patient.id === active.id);
-      const newIndex = patients.findIndex(patient => patient.id === over.id);
+      const oldIndex = items.findIndex(it => it.id === String(active.id));
+      const newIndex = items.findIndex(it => it.id === String(over.id));
 
-      setPatients(arrayMove(patients, oldIndex, newIndex));
+      setItems(arrayMove(items, oldIndex, newIndex));
       
       toast({
         title: "Queue updated",

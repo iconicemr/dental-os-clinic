@@ -102,7 +102,7 @@ function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStartin
           <div className="flex items-center gap-2 mb-1">
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
             <h3 className="font-medium text-sm truncate">
-              {patient.arabic_full_name}
+              {item.patients.arabic_full_name}
             </h3>
           </div>
           

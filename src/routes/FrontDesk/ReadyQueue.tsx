@@ -287,11 +287,12 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
       if (patientError) throw patientError;
 
       // Update appointment status if exists
-      await supabase
-        .from('appointments')
-        .update({ status: 'in_chair' })
-        .eq('patient_id', patientId)
-        .eq('status', 'ready');
+      if (appointmentId) {
+        await supabase
+          .from('appointments')
+          .update({ status: 'in_chair' })
+          .eq('id', appointmentId);
+      }
 
       return visit;
     },

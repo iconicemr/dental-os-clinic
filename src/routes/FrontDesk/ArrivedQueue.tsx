@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Clock, Phone, User, Stethoscope, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface ArrivedQueueProps {
   searchTerm: string;

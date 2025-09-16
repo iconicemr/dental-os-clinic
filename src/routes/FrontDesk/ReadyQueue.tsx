@@ -238,20 +238,20 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
   //   },
   // });
 
-  const { data: rooms = [] } = useQuery({
-    queryKey: ['rooms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('id, name')
-        .eq('is_active', true)
-        .eq('clinic_id', currentClinic?.id || '')
-        .order('name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // const { data: rooms = [] } = useQuery({
+  //   queryKey: ['rooms'],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase
+  //       .from('rooms')
+  //       .select('id, name')
+  //       .eq('is_active', true)
+  //       .eq('clinic_id', currentClinic?.id || '')
+  //       .order('name');
+  //
+  //     if (error) throw error;
+  //     return data || [];
+  //   },
+  // });
 
   const startVisitMutation = useMutation({
     mutationFn: async ({ patientId, providerId, roomId }: { 

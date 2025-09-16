@@ -152,7 +152,7 @@ function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStartin
         <Button
           size="sm"
           variant="outline"
-          onClick={() => onPatientSelect(patient.id)}
+          onClick={() => onPatientSelect(item.patients.id)}
           className="text-xs"
         >
           <User className="mr-1 h-3 w-3" />

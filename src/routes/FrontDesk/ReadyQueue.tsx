@@ -265,6 +265,7 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
         .from('visits')
         .insert({
           patient_id: patientId,
+          appointment_id: appointmentId || null,
           provider_id: providerId || null,
           room_id: roomId || null,
           clinic_id: currentClinic?.id || null,

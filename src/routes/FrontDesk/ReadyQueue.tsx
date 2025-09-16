@@ -32,15 +32,32 @@ interface ReadyQueueProps {
   onPatientSelect: (patientId: string) => void;
 }
 
+interface ReadyItem {
+  id: string; // appointment id
+  patient_id: string;
+  provider_id: string | null;
+  room_id: string | null;
+  starts_at: string;
+  status: string;
+  patients: {
+    id: string;
+    arabic_full_name: string;
+    phone: string | null;
+    updated_at: string;
+  };
+  providers: { display_name: string } | null;
+  rooms: { name: string } | null;
+}
+
 interface SortablePatientProps {
-  patient: any;
+  item: ReadyItem;
   index: number;
   onPatientSelect: (patientId: string) => void;
-  onStartVisit: (patientId: string) => void;
+  onStartVisit: (item: ReadyItem) => void;
   isStarting: boolean;
 }
 
-function SortablePatient({ patient, index, onPatientSelect, onStartVisit, isStarting }: SortablePatientProps) {
+function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStarting }: SortablePatientProps) {
   const {
     attributes,
     listeners,

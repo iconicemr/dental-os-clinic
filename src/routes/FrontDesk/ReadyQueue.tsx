@@ -315,11 +315,12 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     },
   });
 
-  const handleStartVisit = (patientId: string) => {
+  const handleStartVisit = (item: ReadyItem) => {
     startVisitMutation.mutate({
-      patientId,
-      providerId: selectedProvider || undefined,
-      roomId: selectedRoom || undefined,
+      appointmentId: item.id,
+      patientId: item.patients.id,
+      providerId: item.provider_id || undefined,
+      roomId: item.room_id || undefined,
     });
   };
 

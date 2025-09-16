@@ -141,7 +141,7 @@ function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStartin
       <div className="flex gap-2">
         <Button
           size="sm"
-          onClick={() => onStartVisit(patient.id)}
+          onClick={() => onStartVisit(item)}
           disabled={isStarting}
           className="flex-1 text-xs bg-green-600 hover:bg-green-700"
         >

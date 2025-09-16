@@ -365,65 +365,45 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     );
   }
 
+  // Group items by provider
+  const groups = items.reduce((acc: Record<string, { label: string; items: ReadyItem[] }>, it) => {
+    const key = it.providers?.display_name ? it.providers.display_name : 'Unassigned';
+    if (!acc[key]) acc[key] = { label: key, items: [] };
+    acc[key].items.push(it);
+    return acc;
+  }, {});
+
   return (
-    <div className="space-y-4">
-      {/* Quick Defaults */}
-      <div className="p-3 border-b bg-muted/20">
-        <div className="space-y-2">
-          <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Default Provider" />
-            </SelectTrigger>
-            <SelectContent>
-              {providers.map(provider => (
-                <SelectItem key={provider.id} value={provider.id}>
-                  {provider.display_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Default Room" />
-            </SelectTrigger>
-            <SelectContent>
-              {rooms.map(room => (
-                <SelectItem key={room.id} value={room.id}>
-                  {room.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Draggable Queue */}
-      <div className="p-2">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={patients.map(p => p.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {patients.map((patient, index) => (
-                <SortablePatient
-                  key={patient.id}
-                  patient={patient}
-                  index={index}
-                  onPatientSelect={onPatientSelect}
-                  onStartVisit={handleStartVisit}
-                  isStarting={startVisitMutation.isPending}
-                />
-              ))}
+    <div className="space-y-4 p-2">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Object.values(groups).map((group) => (
+            <div key={group.label} className="bg-muted/10 rounded-md p-2">
+              <div className="text-xs font-medium mb-2 px-1">
+                {group.label}
+              </div>
+              <SortableContext items={group.items.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {group.items.map((item, index) => (
+                    <SortablePatient
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      onPatientSelect={onPatientSelect}
+                      onStartVisit={handleStartVisit}
+                      isStarting={startVisitMutation.isPending}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
-          </SortableContext>
-        </DndContext>
-      </div>
+          ))}
+        </div>
+      </DndContext>
     </div>
   );
 }

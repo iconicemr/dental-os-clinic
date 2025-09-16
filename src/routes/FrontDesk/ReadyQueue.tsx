@@ -167,9 +167,7 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { profile, currentClinic } = useAppStore();
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
-  const [selectedRoom, setSelectedRoom] = useState<string>('');
-  const [patients, setPatients] = useState<any[]>([]);
+  const [items, setItems] = useState<ReadyItem[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),

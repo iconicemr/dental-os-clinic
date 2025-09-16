@@ -115,10 +115,26 @@ function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStartin
         </div>
       </div>
 
+      {/* Provider & Room */}
+      <div className="space-y-1 mb-2 text-xs text-muted-foreground">
+        {item.providers && (
+          <div className="flex items-center gap-2">
+            <Stethoscope className="h-3 w-3" />
+            <span>{item.providers.display_name}</span>
+          </div>
+        )}
+        {item.rooms && (
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3 w-3" />
+            <span>{item.rooms.name}</span>
+          </div>
+        )}
+      </div>
+
       {/* Wait Time */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
         <Clock className="h-3 w-3" />
-        <span>Ready for {formatDistanceToNow(new Date(patient.updated_at))}</span>
+        <span>Ready for {formatDistanceToNow(new Date(item.patients.updated_at))}</span>
       </div>
 
       {/* Actions */}

@@ -254,10 +254,11 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
   // });
 
   const startVisitMutation = useMutation({
-    mutationFn: async ({ patientId, providerId, roomId }: { 
-      patientId: string; 
-      providerId?: string; 
-      roomId?: string; 
+    mutationFn: async ({ appointmentId, patientId, providerId, roomId }: {
+      appointmentId?: string;
+      patientId: string;
+      providerId?: string;
+      roomId?: string;
     }) => {
       // Create visit
       const { data: visit, error: visitError } = await supabase

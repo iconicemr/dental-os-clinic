@@ -64,7 +64,7 @@ function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStartin
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: patient.id });
+  } = useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),

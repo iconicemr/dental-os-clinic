@@ -110,6 +110,18 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
             onCancel={handleBackToSearch}
           />
         );
+      case 'calendar':
+        return (
+          <CalendarPickerModal
+            isOpen={true}
+            onClose={() => setCurrentStep('actions')}
+            patient={selectedPatient}
+            onAppointmentCreated={() => {
+              handleClose();
+              onComplete();
+            }}
+          />
+        );
       default:
         return null;
     }

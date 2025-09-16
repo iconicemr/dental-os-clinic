@@ -224,19 +224,19 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     }
   }, [fetchedItems]);
 
-  const { data: providers = [] } = useQuery({
-    queryKey: ['providers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('providers')
-        .select('id, display_name')
-        .eq('active', true)
-        .order('display_name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // const { data: providers = [] } = useQuery({
+  //   queryKey: ['providers'],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase
+  //       .from('providers')
+  //       .select('id, display_name')
+  //       .eq('active', true)
+  //       .order('display_name');
+  //
+  //     if (error) throw error;
+  //     return data || [];
+  //   },
+  // });
 
   const { data: rooms = [] } = useQuery({
     queryKey: ['rooms'],

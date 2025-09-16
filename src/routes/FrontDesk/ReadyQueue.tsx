@@ -176,22 +176,44 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     })
   );
 
-  const { data: fetchedPatients = [], isLoading } = useQuery({
+  const { data: fetchedItems = [], isLoading } = useQuery({
     queryKey: ['ready-queue', searchTerm],
     queryFn: async () => {
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+
       let query = supabase
-        .from('patients')
-        .select('id, arabic_full_name, phone, created_at, updated_at')
-        .eq('status', 'ready')
-        .order('updated_at', { ascending: true }); // FIFO
+        .from('appointments')
+        .select(`
+          id,
+          patient_id,
+          provider_id,
+          room_id,
+          starts_at,
+          status,
+          patients!inner(
+            id,
+            arabic_full_name,
+            phone,
+            updated_at,
+            status
+          ),
+          providers(display_name),
+          rooms(name)
+        `)
+        .eq('patients.status', 'ready')
+        .gte('starts_at', start)
+        .lte('starts_at', end)
+        .order('starts_at', { ascending: true });
 
       if (searchTerm) {
-        query = query.or(`arabic_full_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+        query = query.or(`patients.arabic_full_name.ilike.%${searchTerm}%,patients.phone.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data as ReadyItem[]) || [];
     },
   });
 

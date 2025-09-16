@@ -68,21 +68,7 @@ export default function AddPatientModal({ isOpen, onClose, onComplete }: AddPati
   };
 
   const handleAppointment = () => {
-    // Navigate to calendar page for scheduling
-    try {
-      // Lazy import to avoid extra dependency in this file
-      const { useNavigate } = require('react-router-dom');
-      const navigate = useNavigate();
-      if (selectedPatient) {
-        navigate(`/calendar?patientId=${selectedPatient.id}`);
-      } else if (searchTerm) {
-        navigate('/calendar');
-      }
-    } catch (e) {
-      // Fallback: just close
-    }
-    handleClose();
-    onComplete();
+    setCurrentStep('calendar');
   };
 
   const handleBackToSearch = () => {

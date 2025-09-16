@@ -302,8 +302,6 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
         description: "Patient moved to clinical console",
       });
       queryClient.invalidateQueries({ queryKey: ['ready-queue'] });
-      setSelectedProvider('');
-      setSelectedRoom('');
     },
     onError: (error) => {
       console.error('Error starting visit:', error);

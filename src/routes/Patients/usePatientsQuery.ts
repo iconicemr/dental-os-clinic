@@ -194,10 +194,13 @@ export function useUpdatePatientStatusMutation() {
         .eq('id', patientId);
       if (patientError) throw patientError;
 
-      // Keep appointments in sync
+      // Keep appointments in sync - map patient status to appointment status
+      let appointmentStatus: "planned" | "confirmed" | "arrived" | "ready" | "in_chair" | "completed" | "no_show" | "cancelled" = 
+        nextStatus === 'discharged' ? 'completed' : nextStatus as "planned" | "confirmed" | "arrived" | "ready" | "in_chair" | "completed" | "no_show" | "cancelled";
+      
       const { error: apptError } = await supabase
         .from('appointments')
-        .update({ status: nextStatus })
+        .update({ status: appointmentStatus })
         .eq('patient_id', patientId);
       if (apptError) throw apptError;
 

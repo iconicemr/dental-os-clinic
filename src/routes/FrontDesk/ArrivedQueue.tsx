@@ -113,6 +113,22 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
             </Badge>
           </div>
 
+          {/* Provider & Room (if any) */}
+          <div className="space-y-1 mb-2 text-xs text-muted-foreground">
+            {apptsMap?.[patient.id]?.providers && (
+              <div className="flex items-center gap-2">
+                <Stethoscope className="h-3 w-3" />
+                <span>{apptsMap[patient.id].providers.display_name}</span>
+              </div>
+            )}
+            {apptsMap?.[patient.id]?.rooms && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3 w-3" />
+                <span>{apptsMap[patient.id].rooms.name}</span>
+              </div>
+            )}
+          </div>
+
           {/* Wait Time */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
             <Clock className="h-3 w-3" />

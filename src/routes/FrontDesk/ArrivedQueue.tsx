@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Clock, Phone, User } from 'lucide-react';
+import { FileText, Clock, Phone, User, Stethoscope, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface ArrivedQueueProps {
   searchTerm: string;
@@ -34,6 +34,28 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
     // Navigate to intake form
     window.location.href = `/intake/form?patient=${patientId}`;
   };
+
+  // Fetch today's appointments for these patients to get provider/room
+  const { data: apptsMap } = useQuery({
+    queryKey: ['arrived-appts', patients.map(p => p.id).join(',')],
+    enabled: patients.length > 0,
+    queryFn: async () => {
+      const ids = patients.map(p => p.id);
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('id, patient_id, provider_id, room_id, status, starts_at, providers(display_name), rooms(name)')
+        .in('patient_id', ids)
+        .gte('starts_at', start)
+        .lte('starts_at', end);
+      if (error) throw error;
+      const map: Record<string, any> = {};
+      (data || []).forEach((a: any) => { map[a.patient_id] = a; });
+      return map;
+    }
+  });
 
   if (isLoading) {
     return (
@@ -88,6 +110,22 @@ export default function ArrivedQueue({ searchTerm, onPatientSelect }: ArrivedQue
             <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 shrink-0">
               Arrived
             </Badge>
+          </div>
+
+          {/* Provider & Room (if any) */}
+          <div className="space-y-1 mb-2 text-xs text-muted-foreground">
+            {apptsMap?.[patient.id]?.providers && (
+              <div className="flex items-center gap-2">
+                <Stethoscope className="h-3 w-3" />
+                <span>{apptsMap[patient.id].providers.display_name}</span>
+              </div>
+            )}
+            {apptsMap?.[patient.id]?.rooms && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-3 w-3" />
+                <span>{apptsMap[patient.id].rooms.name}</span>
+              </div>
+            )}
           </div>
 
           {/* Wait Time */}

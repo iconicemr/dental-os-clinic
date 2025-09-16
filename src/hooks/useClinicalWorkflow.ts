@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAppStore } from '@/store/appStore';
 
 export interface ClinicalPatient {
   id: string;
@@ -91,16 +92,26 @@ export function useClinicalWorkflow(activeVisitId: string | null) {
 
 // Hook for ready queue
 export function useReadyQueue() {
+  const { profile } = useAppStore();
   return useQuery({
-    queryKey: ['readyQueue'],
+    queryKey: ['readyQueue', profile?.user_id],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
-      
-      const { data, error } = await supabase
+
+      // Resolve current provider for this user (if any)
+      const { data: meProvider } = await supabase
+        .from('providers')
+        .select('id')
+        .eq('user_id', profile?.user_id || '')
+        .maybeSingle();
+      const myProviderId = meProvider?.id || null;
+
+      let query = supabase
         .from('appointments')
         .select(`
           id,
           patient_id,
+          provider_id,
           starts_at,
           status,
           queue_order,
@@ -111,14 +122,20 @@ export function useReadyQueue() {
             phone,
             dob,
             status
-          )
+          ),
+          providers(display_name)
         `)
         .eq('patients.status', 'ready')
         .gte('starts_at', today)
         .lt('starts_at', `${today}T23:59:59`)
         .order('queue_order', { ascending: true })
         .order('starts_at', { ascending: true });
-        
+
+      if (myProviderId) {
+        query = query.eq('provider_id', myProviderId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -129,14 +146,14 @@ export function useReadyQueue() {
 // Hook for starting a visit
 export function useStartVisit() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ 
-      patientId, 
+    mutationFn: async ({
+      patientId,
       appointmentId,
       providerId,
-      roomId 
-    }: { 
+      roomId
+    }: {
       patientId: string;
       appointmentId?: string;
       providerId?: string;
@@ -149,19 +166,32 @@ export function useStartVisit() {
         .eq('patient_id', patientId)
         .is('ended_at', null)
         .maybeSingle();
-        
+
       if (existingVisit) {
         return existingVisit;
       }
-      
+
+      // If providerId not supplied, try from appointment
+      let providerToUse = providerId || null;
+      let roomToUse = roomId || null;
+      if (!providerToUse && appointmentId) {
+        const { data: appt } = await supabase
+          .from('appointments')
+          .select('provider_id, room_id')
+          .eq('id', appointmentId)
+          .maybeSingle();
+        if (appt?.provider_id) providerToUse = appt.provider_id as any;
+        if (!roomToUse && appt?.room_id) roomToUse = appt.room_id as any;
+      }
+
       // Create new visit
       const { data: visit, error: visitError } = await supabase
         .from('visits')
         .insert({
           patient_id: patientId,
-          appointment_id: appointmentId,
-          provider_id: providerId,
-          room_id: roomId,
+          appointment_id: appointmentId || null,
+          provider_id: providerToUse,
+          room_id: roomToUse,
           started_at: new Date().toISOString(),
           status: 'in_chair',
         })

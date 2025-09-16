@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Stethoscope, User, Phone, Clock, Play, GripVertical } from 'lucide-react';
+import { Stethoscope, User, Phone, Clock, Play, GripVertical, MapPin } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -32,22 +32,39 @@ interface ReadyQueueProps {
   onPatientSelect: (patientId: string) => void;
 }
 
+interface ReadyItem {
+  id: string; // appointment id
+  patient_id: string;
+  provider_id: string | null;
+  room_id: string | null;
+  starts_at: string;
+  status: string;
+  patients: {
+    id: string;
+    arabic_full_name: string;
+    phone: string | null;
+    updated_at: string;
+  };
+  providers: { display_name: string } | null;
+  rooms: { name: string } | null;
+}
+
 interface SortablePatientProps {
-  patient: any;
+  item: ReadyItem;
   index: number;
   onPatientSelect: (patientId: string) => void;
-  onStartVisit: (patientId: string) => void;
+  onStartVisit: (item: ReadyItem) => void;
   isStarting: boolean;
 }
 
-function SortablePatient({ patient, index, onPatientSelect, onStartVisit, isStarting }: SortablePatientProps) {
+function SortablePatient({ item, index, onPatientSelect, onStartVisit, isStarting }: SortablePatientProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: patient.id });
+  } = useSortable({ id: item.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -85,30 +102,46 @@ function SortablePatient({ patient, index, onPatientSelect, onStartVisit, isStar
           <div className="flex items-center gap-2 mb-1">
             <User className="h-4 w-4 text-muted-foreground shrink-0" />
             <h3 className="font-medium text-sm truncate">
-              {patient.arabic_full_name}
+              {item.patients.arabic_full_name}
             </h3>
           </div>
           
-          {patient.phone && (
+          {item.patients.phone && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Phone className="h-3 w-3" />
-              <span>{patient.phone}</span>
+              <span>{item.patients.phone}</span>
             </div>
           )}
         </div>
       </div>
 
+      {/* Provider & Room */}
+      <div className="space-y-1 mb-2 text-xs text-muted-foreground">
+        {item.providers && (
+          <div className="flex items-center gap-2">
+            <Stethoscope className="h-3 w-3" />
+            <span>{item.providers.display_name}</span>
+          </div>
+        )}
+        {item.rooms && (
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3 w-3" />
+            <span>{item.rooms.name}</span>
+          </div>
+        )}
+      </div>
+
       {/* Wait Time */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
         <Clock className="h-3 w-3" />
-        <span>Ready for {formatDistanceToNow(new Date(patient.updated_at))}</span>
+        <span>Ready for {formatDistanceToNow(new Date(item.patients.updated_at))}</span>
       </div>
 
       {/* Actions */}
       <div className="flex gap-2">
         <Button
           size="sm"
-          onClick={() => onStartVisit(patient.id)}
+          onClick={() => onStartVisit(item)}
           disabled={isStarting}
           className="flex-1 text-xs bg-green-600 hover:bg-green-700"
         >
@@ -119,7 +152,7 @@ function SortablePatient({ patient, index, onPatientSelect, onStartVisit, isStar
         <Button
           size="sm"
           variant="outline"
-          onClick={() => onPatientSelect(patient.id)}
+          onClick={() => onPatientSelect(item.patients.id)}
           className="text-xs"
         >
           <User className="mr-1 h-3 w-3" />
@@ -134,9 +167,7 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { profile, currentClinic } = useAppStore();
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
-  const [selectedRoom, setSelectedRoom] = useState<string>('');
-  const [patients, setPatients] = useState<any[]>([]);
+  const [items, setItems] = useState<ReadyItem[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -145,72 +176,96 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     })
   );
 
-  const { data: fetchedPatients = [], isLoading } = useQuery({
+  const { data: fetchedItems = [], isLoading } = useQuery({
     queryKey: ['ready-queue', searchTerm],
     queryFn: async () => {
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+
       let query = supabase
-        .from('patients')
-        .select('id, arabic_full_name, phone, created_at, updated_at')
-        .eq('status', 'ready')
-        .order('updated_at', { ascending: true }); // FIFO
+        .from('appointments')
+        .select(`
+          id,
+          patient_id,
+          provider_id,
+          room_id,
+          starts_at,
+          status,
+          patients!inner(
+            id,
+            arabic_full_name,
+            phone,
+            updated_at,
+            status
+          ),
+          providers(display_name),
+          rooms(name)
+        `)
+        .eq('patients.status', 'ready')
+        .gte('starts_at', start)
+        .lte('starts_at', end)
+        .order('starts_at', { ascending: true });
 
       if (searchTerm) {
-        query = query.or(`arabic_full_name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
+        query = query.or(`patients.arabic_full_name.ilike.%${searchTerm}%,patients.phone.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data as ReadyItem[]) || [];
     },
   });
 
   // Update local state when data changes
   React.useEffect(() => {
-    if (JSON.stringify(fetchedPatients) !== JSON.stringify(patients)) {
-      setPatients(fetchedPatients);
+    if (JSON.stringify(fetchedItems) !== JSON.stringify(items)) {
+      setItems(fetchedItems);
     }
-  }, [fetchedPatients]);
+  }, [fetchedItems]);
 
-  const { data: providers = [] } = useQuery({
-    queryKey: ['providers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('providers')
-        .select('id, display_name')
-        .eq('active', true)
-        .order('display_name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // const { data: providers = [] } = useQuery({
+  //   queryKey: ['providers'],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase
+  //       .from('providers')
+  //       .select('id, display_name')
+  //       .eq('active', true)
+  //       .order('display_name');
+  //
+  //     if (error) throw error;
+  //     return data || [];
+  //   },
+  // });
 
-  const { data: rooms = [] } = useQuery({
-    queryKey: ['rooms'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('id, name')
-        .eq('is_active', true)
-        .eq('clinic_id', currentClinic?.id || '')
-        .order('name');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // const { data: rooms = [] } = useQuery({
+  //   queryKey: ['rooms'],
+  //   queryFn: async () => {
+  //     const { data, error } = await supabase
+  //       .from('rooms')
+  //       .select('id, name')
+  //       .eq('is_active', true)
+  //       .eq('clinic_id', currentClinic?.id || '')
+  //       .order('name');
+  //
+  //     if (error) throw error;
+  //     return data || [];
+  //   },
+  // });
 
   const startVisitMutation = useMutation({
-    mutationFn: async ({ patientId, providerId, roomId }: { 
-      patientId: string; 
-      providerId?: string; 
-      roomId?: string; 
+    mutationFn: async ({ appointmentId, patientId, providerId, roomId }: {
+      appointmentId?: string;
+      patientId: string;
+      providerId?: string;
+      roomId?: string;
     }) => {
       // Create visit
       const { data: visit, error: visitError } = await supabase
         .from('visits')
         .insert({
           patient_id: patientId,
+          appointment_id: appointmentId || null,
           provider_id: providerId || null,
           room_id: roomId || null,
           clinic_id: currentClinic?.id || null,
@@ -232,11 +287,12 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
       if (patientError) throw patientError;
 
       // Update appointment status if exists
-      await supabase
-        .from('appointments')
-        .update({ status: 'in_chair' })
-        .eq('patient_id', patientId)
-        .eq('status', 'ready');
+      if (appointmentId) {
+        await supabase
+          .from('appointments')
+          .update({ status: 'in_chair' })
+          .eq('id', appointmentId);
+      }
 
       return visit;
     },
@@ -259,11 +315,12 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     },
   });
 
-  const handleStartVisit = (patientId: string) => {
+  const handleStartVisit = (item: ReadyItem) => {
     startVisitMutation.mutate({
-      patientId,
-      providerId: selectedProvider || undefined,
-      roomId: selectedRoom || undefined,
+      appointmentId: item.id,
+      patientId: item.patients.id,
+      providerId: item.provider_id || undefined,
+      roomId: item.room_id || undefined,
     });
   };
 
@@ -271,10 +328,10 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = patients.findIndex(patient => patient.id === active.id);
-      const newIndex = patients.findIndex(patient => patient.id === over.id);
+      const oldIndex = items.findIndex(it => it.id === String(active.id));
+      const newIndex = items.findIndex(it => it.id === String(over.id));
 
-      setPatients(arrayMove(patients, oldIndex, newIndex));
+      setItems(arrayMove(items, oldIndex, newIndex));
       
       toast({
         title: "Queue updated",
@@ -296,7 +353,7 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     );
   }
 
-  if (patients.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="p-4 text-center text-muted-foreground">
         <Stethoscope className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -308,65 +365,45 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     );
   }
 
+  // Group items by provider
+  const groups = items.reduce((acc: Record<string, { label: string; items: ReadyItem[] }>, it) => {
+    const key = it.providers?.display_name ? it.providers.display_name : 'Unassigned';
+    if (!acc[key]) acc[key] = { label: key, items: [] };
+    acc[key].items.push(it);
+    return acc;
+  }, {});
+
   return (
-    <div className="space-y-4">
-      {/* Quick Defaults */}
-      <div className="p-3 border-b bg-muted/20">
-        <div className="space-y-2">
-          <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Default Provider" />
-            </SelectTrigger>
-            <SelectContent>
-              {providers.map(provider => (
-                <SelectItem key={provider.id} value={provider.id}>
-                  {provider.display_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Default Room" />
-            </SelectTrigger>
-            <SelectContent>
-              {rooms.map(room => (
-                <SelectItem key={room.id} value={room.id}>
-                  {room.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Draggable Queue */}
-      <div className="p-2">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={patients.map(p => p.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {patients.map((patient, index) => (
-                <SortablePatient
-                  key={patient.id}
-                  patient={patient}
-                  index={index}
-                  onPatientSelect={onPatientSelect}
-                  onStartVisit={handleStartVisit}
-                  isStarting={startVisitMutation.isPending}
-                />
-              ))}
+    <div className="space-y-4 p-2">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Object.values(groups).map((group) => (
+            <div key={group.label} className="bg-muted/10 rounded-md p-2">
+              <div className="text-xs font-medium mb-2 px-1">
+                {group.label}
+              </div>
+              <SortableContext items={group.items.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {group.items.map((item, index) => (
+                    <SortablePatient
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      onPatientSelect={onPatientSelect}
+                      onStartVisit={handleStartVisit}
+                      isStarting={startVisitMutation.isPending}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
             </div>
-          </SortableContext>
-        </DndContext>
-      </div>
+          ))}
+        </div>
+      </DndContext>
     </div>
   );
 }

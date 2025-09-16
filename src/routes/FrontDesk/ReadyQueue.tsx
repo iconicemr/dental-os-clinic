@@ -353,7 +353,7 @@ export default function ReadyQueue({ searchTerm, onPatientSelect }: ReadyQueuePr
     );
   }
 
-  if (patients.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="p-4 text-center text-muted-foreground">
         <Stethoscope className="h-8 w-8 mx-auto mb-2 opacity-50" />

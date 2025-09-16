@@ -134,6 +134,44 @@ export type Database = {
         }
         Relationships: []
       }
+      clinic_settings: {
+        Row: {
+          availability: Json | null
+          clinic_id: string
+          created_at: string
+          id: string
+          slot_minutes: number | null
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          availability?: Json | null
+          clinic_id: string
+          created_at?: string
+          id?: string
+          slot_minutes?: number | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          availability?: Json | null
+          clinic_id?: string
+          created_at?: string
+          id?: string
+          slot_minutes?: number | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_settings_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinics: {
         Row: {
           address: string | null
